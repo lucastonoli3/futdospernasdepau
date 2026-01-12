@@ -21,6 +21,23 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ players, currentSession, financ
     const [isSavingFinances, setIsSavingFinances] = useState(false);
     const [newGoal, setNewGoal] = useState({ title: '', target: '' });
 
+    // Estados para Humilhações
+    const [pendingHumiliations, setPendingHumiliations] = useState<any[]>([]);
+
+    React.useEffect(() => {
+        fetchHumiliations();
+    }, []);
+
+    const fetchHumiliations = async () => {
+        const { data, error } = await supabase
+            .from('humiliations')
+            .select('*')
+            .eq('status', 'pending')
+            .order('created_at', { ascending: false });
+
+        if (data) setPendingHumiliations(data);
+    };
+
     const updateSession = async (updates: any) => {
         const { error } = await supabase
             .from('sessions')
@@ -113,6 +130,36 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ players, currentSession, financ
         }
     };
 
+    const handleConfirmHumiliation = async (h: any, approve: boolean) => {
+        if (!approve) {
+            await supabase.from('humiliations').update({ status: 'rejected' }).eq('id', h.id);
+            fetchHumiliations();
+            return;
+        }
+
+        // 1. Confirmar no bueiro
+        const { error: hError } = await supabase
+            .from('humiliations')
+            .update({ status: 'confirmed' })
+            .eq('id', h.id);
+
+        if (hError) return;
+
+        // 2. Atualizar Moral
+        const performer = players.find(p => p.id === h.performer_id);
+        const victim = players.find(p => p.id === h.victim_id);
+
+        if (performer && victim) {
+            // Performa ganha 10, Vitima perde 10
+            await supabase.from('players').update({ moral_score: Math.min(100, performer.moralScore + 10) }).eq('id', performer.id);
+            await supabase.from('players').update({ moral_score: Math.max(0, victim.moralScore - 10) }).eq('id', victim.id);
+        }
+
+        fetchHumiliations();
+        onUpdatePlayer();
+        alert("HUMILHAÇÃO CONFIRMADA! A moral caiu como um tijolo.");
+    };
+
     return (
         <div className="max-w-6xl mx-auto p-4 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
             <div className="flex items-center justify-between border-b border-neutral-800 pb-4 mb-8">
@@ -129,6 +176,51 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ players, currentSession, financ
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* 💀 SISTEMA DE PENITÊNCIA (HUMILHAÇÕES PENDENTES) */}
+                <section className="bg-neutral-900 border-2 border-red-900 p-6 space-y-6 lg:col-span-2 shadow-[0_0_50px_rgba(153,27,27,0.1)]">
+                    <h3 className="text-xl font-oswald text-red-600 uppercase italic flex items-center gap-3">
+                        <span className="animate-pulse">💀</span> Tribunal da Humilhação (Pedidos Pendentes)
+                    </h3>
+
+                    <div className="space-y-4">
+                        {pendingHumiliations.length === 0 ? (
+                            <p className="text-neutral-700 font-mono text-xs uppercase italic">Nenhuma presepada reportada até agora...</p>
+                        ) : (
+                            pendingHumiliations.map(h => {
+                                const performer = players.find(p => p.id === h.performer_id);
+                                const victim = players.find(p => p.id === h.victim_id);
+                                return (
+                                    <div key={h.id} className="bg-black border border-neutral-800 p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+                                        <div className="flex items-center gap-4">
+                                            <div className="text-center">
+                                                <p className="text-[9px] text-green-500 font-black uppercase">Executor</p>
+                                                <p className="text-white font-oswald uppercase">{performer?.nickname || '???'}</p>
+                                            </div>
+                                            <div className="text-red-600 font-black text-xl italic animate-bounce">
+                                                ➔ {h.type.toUpperCase()} ➔
+                                            </div>
+                                            <div className="text-center">
+                                                <p className="text-[9px] text-red-500 font-black uppercase">Vítima</p>
+                                                <p className="text-white font-oswald uppercase">{victim?.nickname || '???'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-2 w-full md:w-auto">
+                                            <button
+                                                onClick={() => handleConfirmHumiliation(h, false)}
+                                                className="flex-1 md:flex-none px-6 py-2 border border-neutral-700 text-neutral-500 hover:bg-white hover:text-black transition-all text-[10px] font-black uppercase italic"
+                                            >Mentira (Recusar)</button>
+                                            <button
+                                                onClick={() => handleConfirmHumiliation(h, true)}
+                                                className="flex-1 md:flex-none px-6 py-2 bg-red-700 hover:bg-red-600 text-white transition-all text-[10px] font-black uppercase italic shadow-[0_0_20px_rgba(185,28,28,0.2)]"
+                                            >CONFIRMO O CRIME</button>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        )}
+                    </div>
+                </section>
+
                 {/* 🏦 GESTÃO DO COFRE (NOVO) */}
                 <section className="bg-neutral-900 border border-neutral-800 p-6 space-y-6">
                     <h3 className="text-lg font-oswald text-green-600 uppercase italic flex items-center gap-2 underline decoration-green-900">

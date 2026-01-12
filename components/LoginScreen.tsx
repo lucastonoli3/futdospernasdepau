@@ -1,8 +1,8 @@
-
 import React, { useState, useRef } from 'react';
 import { Player, Position, PlayerStatus } from '../types';
 import { geminiService } from '../services/geminiService';
 import { supabase } from '../services/supabaseClient';
+import imageCompression from 'browser-image-compression';
 
 interface LoginScreenProps {
   onLogin: (player: Player) => void;
@@ -55,10 +55,13 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     if (videoRef.current && canvasRef.current) {
       const context = canvasRef.current.getContext('2d');
       if (context) {
-        canvasRef.current.width = videoRef.current.videoWidth;
-        canvasRef.current.height = videoRef.current.videoHeight;
-        context.drawImage(videoRef.current, 0, 0);
-        const photoDataUrl = canvasRef.current.toDataURL('image/jpeg');
+        // Compressão via Resize de Canvas (FinOps)
+        const maxWidth = 800;
+        const scale = Math.min(1, maxWidth / videoRef.current.videoWidth);
+        canvasRef.current.width = videoRef.current.videoWidth * scale;
+        canvasRef.current.height = videoRef.current.videoHeight * scale;
+        context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
+        const photoDataUrl = canvasRef.current.toDataURL('image/jpeg', 0.8);
 
         setIsAnalyzing(true);
         setError('');

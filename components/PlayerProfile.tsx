@@ -4,6 +4,7 @@ import { Player, HeritageItem } from '../types';
 import BadgeDisplay from './BadgeDisplay';
 import { geminiService } from '../services/geminiService';
 import { supabase } from '../services/supabaseClient';
+import imageCompression from 'browser-image-compression';
 
 interface PlayerProfileProps {
   player: Player;
@@ -16,6 +17,7 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
   const [aiAnalysis, setAiAnalysis] = useState<string>("");
   const [loadingAi, setLoadingAi] = useState(false);
   const [heritageItems, setHeritageItems] = useState<HeritageItem[]>([]);
+  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   const [thought, setThought] = useState(player.thought || "");
   const [highBadges, setHighBadges] = useState<string[]>(player.high_badges || []);
   const [isSaving, setIsSaving] = useState(false);
@@ -48,11 +50,27 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
     }
   }, [isExpanded]);
 
-  const loadAiDossier = async () => {
+  const loadAiDossier = async (forceRefresh = false) => {
+    // FinOps: Usar cache se existir e não for refresh forçado
+    if (player.ai_dossier && !forceRefresh) {
+      setAiAnalysis(player.ai_dossier);
+      return;
+    }
+
     setLoadingAi(true);
     try {
       const stats = `Gols: ${player.goals}, Assistêncas: ${player.assists}, Moral: ${player.moralScore}`;
       const dossier = await geminiService.generatePlayerDossier(player.nickname, stats, player.moralScore, "");
+
+      // Salvar no banco para cache
+      await supabase
+        .from('players')
+        .update({
+          ai_dossier: dossier,
+          last_ai_update: new Date().toISOString()
+        })
+        .eq('id', player.id);
+
       setAiAnalysis(dossier || "IA sem palavras para esse fenômeno.");
     } catch (e) {
       setAiAnalysis("Escritório da IA fechado.");
@@ -127,14 +145,21 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
     setUploadProgress(true);
 
     try {
-      // 1. Upload para o Storage
+      // 1. Upload para o Storage com Compressão
+      const options = {
+        maxSizeMB: 0.5,
+        maxWidthOrHeight: 1200,
+        useWebWorker: true
+      };
+
+      const compressedFile = await imageCompression(tempFile, options);
       const fileExt = tempFile.name.split('.').pop();
       const fileName = `${Date.now()}.${fileExt}`;
       const filePath = `heritage/${player.id}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('player_assets')
-        .upload(filePath, tempFile);
+        .upload(filePath, compressedFile);
 
       if (uploadError) throw uploadError;
 
@@ -209,6 +234,28 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
     } catch (err) {
       console.error(err);
       alert("Erro ao apagar o rastro da sua vergonha.");
+    }
+  };
+
+  const handleReportHumiliation = async (type: 'caneta' | 'chapeu' | 'humilhacao') => {
+    if (!currentUser) return;
+    if (currentUser.id === player.id) {
+      alert("Se auto-elogiar é coisa de fracassado.");
+      return;
+    }
+
+    const { error } = await supabase.from('humiliations').insert([{
+      performer_id: currentUser.id,
+      victim_id: player.id,
+      type: type,
+      status: 'pending'
+    }]);
+
+    if (!error) {
+      alert(`DENÚNCIA DE ${type.toUpperCase()} ENVIADA! Aguarde a confirmação do ADM para ver a moral desse lixo cair.`);
+    } else {
+      console.error(error);
+      alert("Falha ao processar o deboche.");
     }
   };
 
@@ -432,6 +479,27 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
                   Personalizar Perfil ⚙️
                 </button>
               )}
+
+              {/* SISTEMA DE DEBOCHE (CONTRA O ADVERSÁRIO) */}
+              {currentUser && !isOwner && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleReportHumiliation('caneta')}
+                    className="p-4 bg-black border-2 border-red-900/50 text-red-600 hover:bg-red-900 hover:text-white transition-all text-xs font-black uppercase italic"
+                    title="Reportar Caneta"
+                  >🖊️ CANETA!</button>
+                  <button
+                    onClick={() => handleReportHumiliation('chapeu')}
+                    className="p-4 bg-black border-2 border-red-900/50 text-red-600 hover:bg-red-900 hover:text-white transition-all text-xs font-black uppercase italic"
+                    title="Reportar Chapéu"
+                  >👒 CHAPÉU!</button>
+                  <button
+                    onClick={() => handleReportHumiliation('humilhacao')}
+                    className="p-4 bg-black border-2 border-red-900/50 text-red-600 hover:bg-red-900 hover:text-white transition-all text-xs font-black uppercase italic"
+                    title="Humilhação Geral"
+                  >💀 HUMILHOU</button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -518,7 +586,11 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
             <h3 className="text-xs font-black text-white uppercase tracking-[0.6em] mb-12 text-center">📽️ Álbum Heritage (A História Viva)</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {album.map(item => (
-                <div key={item.id} className="group relative aspect-square bg-neutral-900 border border-neutral-800 overflow-hidden cursor-pointer">
+                <div
+                  key={item.id}
+                  className="group relative aspect-square bg-neutral-900 border border-neutral-800 overflow-hidden cursor-pointer"
+                  onClick={() => setFullscreenImage(item.photo)}
+                >
                   {isOwner && (
                     <button
                       onClick={(e) => { e.stopPropagation(); handleDeleteHeritage(item.id, item.photo); }}
@@ -557,6 +629,20 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
 
         </div>
       </div>
+
+      {/* MODAL FULLSCREEN */}
+      {fullscreenImage && (
+        <div
+          className="fixed inset-0 z-[200] bg-black/95 flex items-center justify-center p-4 md:p-10 cursor-zoom-out animate-in fade-in duration-300"
+          onClick={() => setFullscreenImage(null)}
+        >
+          <img
+            src={fullscreenImage}
+            className="max-w-full max-h-full object-contain shadow-[0_0_100px_rgba(255,255,255,0.05)]"
+          />
+          <button className="absolute top-6 right-6 text-white text-3xl font-black">✕</button>
+        </div>
+      )}
     </div>
   );
 };

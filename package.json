@@ -12,6 +12,7 @@
     "@google/genai": "^1.35.0",
     "@google/generative-ai": "^0.24.1",
     "@supabase/supabase-js": "^2.90.1",
+    "browser-image-compression": "^2.0.2",
     "openai": "^6.16.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3"
