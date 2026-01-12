@@ -1,0 +1,7 @@
+{
+  "name": "FUT DOS PERNAS DE PAU",
+  "description": "Sistema oficial de gestão e resenha da pelada mais perna de pau de Cariacica. Rankings, conquistas, sorteio de times e zoações automáticas via Gemini AI.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

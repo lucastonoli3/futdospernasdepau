@@ -1,0 +1,170 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --vantablack: #050505;
+  --noir-dark: #0a0a0a;
+  --pitch-green: #064e3b;
+  --blood-red: #991b1b;
+}
+
+body {
+  background-color: var(--vantablack);
+  color: #d1d5db;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Scrollbar - Vantablack Style */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--vantablack);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 0px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--blood-red);
+}
+
+/* Animations */
+@keyframes neon-pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+    text-shadow: 0 0 10px rgba(220, 38, 38, 0.5);
+  }
+
+  50% {
+    opacity: 0.8;
+    text-shadow: 0 0 20px rgba(220, 38, 38, 0.8);
+  }
+}
+
+.animate-neon {
+  animation: neon-pulse 2s infinite ease-in-out;
+}
+
+@keyframes glitch {
+  0% {
+    transform: translate(0);
+  }
+
+  20% {
+    transform: translate(-2px, 2px);
+  }
+
+  40% {
+    transform: translate(-2px, -2px);
+  }
+
+  60% {
+    transform: translate(2px, 2px);
+  }
+
+  80% {
+    transform: translate(2px, -2px);
+  }
+
+  100% {
+    transform: translate(0);
+  }
+}
+
+.hover-glitch:hover {
+  animation: glitch 0.3s infinite linear;
+}
+
+/* Utility to hide scrollbar but keep functionality */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Vantablack Cards */
+.vantablack-card {
+  background: linear-gradient(145deg, #0a0a0a, #050505);
+  border: 1px solid #1a1a1a;
+  box-shadow: 10px 10px 20px #030303, -10px -10px 20px #080808;
+}
+
+.text-stroke-red {
+  -webkit-text-stroke: 1px #991b1b;
+  color: transparent;
+}
+
+/* Magic Badge Animations */
+@keyframes magic-float {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+  }
+
+  25% {
+    transform: translateY(-4px) rotate(1deg);
+  }
+
+  50% {
+    transform: translateY(-2px) rotate(-1deg);
+  }
+
+  75% {
+    transform: translateY(-5px) rotate(0.5deg);
+  }
+
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+}
+
+@keyframes magic-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.4), inset 0 0 10px rgba(168, 85, 247, 0.2);
+    border-color: rgba(168, 85, 247, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 40px rgba(168, 85, 247, 0.7), inset 0 0 20px rgba(192, 132, 252, 0.4);
+    border-color: rgba(192, 132, 252, 0.8);
+  }
+}
+
+@keyframes nebula-shift {
+  0% {
+    filter: hue-rotate(0deg) brightness(1);
+  }
+
+  50% {
+    filter: hue-rotate(45deg) brightness(1.2);
+  }
+
+  100% {
+    filter: hue-rotate(0deg) brightness(1);
+  }
+}
+
+.animate-magic-float {
+  animation: magic-float 6s ease-in-out infinite;
+}
+
+.animate-magic-glow {
+  animation: magic-glow 4s ease-in-out infinite;
+}
+
+.animate-nebula {
+  animation: nebula-shift 8s ease-in-out infinite;
+}
