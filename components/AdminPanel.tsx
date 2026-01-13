@@ -15,6 +15,10 @@ interface AdminPanelProps {
 }
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ players, currentSession, finances, onUpdatePlayer, onUpdateSession, onUpdateFinances }) => {
+    const [activeTab, setActiveTab] = useState<'session' | 'players' | 'finances' | 'system'>('session');
+    const [loading, setLoading] = useState(false);
+
+    // Estados para Ocorrências
     const [selectedPlayerId, setSelectedPlayerId] = useState('');
     const [eventDescription, setEventDescription] = useState('');
     const [eventType, setEventType] = useState<'puskas' | 'vexame' | 'quebra_bola' | 'resenha'>('resenha');
@@ -54,14 +58,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ players, currentSession, financ
 
         if (!error) {
             onUpdatePlayer();
-            // Verificar badges automáticas após o update
             const updatedPlayer = { ...player, [type]: newValue };
             await checkAndAssignBadges(updatedPlayer as Player);
         }
     };
 
     const updateSession = async (updates: Partial<MatchSession>) => {
-        // Mapear campos camelCase para snake_case do Supabase
         const dbUpdates: any = {};
         if (updates.status !== undefined) dbUpdates.status = updates.status;
         if (updates.votingOpen !== undefined) dbUpdates.voting_open = updates.votingOpen;
@@ -82,6 +84,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ players, currentSession, financ
         }
     };
 
+    const handleToggleVoting = () => {
+        if (!currentSession) return;
+        updateSession({ votingOpen: !currentSession.votingOpen });
+    };
+
+    const handleUpdateStatus = (status: MatchSession['status']) => {
+        updateSession({ status });
+    };
+
     const handleUpdateBalance = async () => {
         setIsSavingFinances(true);
         try {
@@ -95,7 +106,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ players, currentSession, financ
             alert("CAIXA ATUALIZADO NO SUPABASE! 💸");
         } catch (err) {
             console.error(err);
-            alert("Erro ao salvar caixa. Você criou a tabela 'finances' no Supabase?");
+            alert("Erro ao salvar caixa.");
         } finally {
             setIsSavingFinances(false);
         }
@@ -132,7 +143,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ players, currentSession, financ
         };
 
         const updatedEvents = [...(player.specialEvents || []), newEvent];
-        const updatedMoral = eventType === 'puskas' ? Math.min(100, player.moralScore + 15) :
+        const updatedMoral = eventType === 'puskas' ? Math.min(1000, player.moralScore + 15) :
             eventType === 'vexame' ? Math.max(0, player.moralScore - 15) : player.moralScore;
 
         const { error } = await supabase
@@ -168,27 +179,23 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ players, currentSession, financ
             return;
         }
 
-        // 1. Confirmar no bueiro
         const { error: hError } = await supabase
             .from('humiliations')
             .update({
                 status: 'confirmed',
-                badge_id: h.badge_id // Garantir que está salvo se houver
+                badge_id: h.badge_id
             })
             .eq('id', h.id);
 
         if (hError) return;
 
-        // 2. Atualizar Moral e dar Badge
         const performer = players.find(p => p.id === h.performer_id);
         const victim = players.find(p => p.id === h.victim_id);
 
         if (performer && victim) {
-            // Performer ganha 10, Vítima perde 10
-            const newPerformerMoral = Math.min(100, (performer?.moralScore || 0) + 10);
+            const newPerformerMoral = (performer?.moralScore || 0) + 10;
             const newVictimMoral = Math.max(0, (victim?.moralScore || 0) - 10);
 
-            // Adicionar badge opcional ao performer
             let performerBadges = [...(performer.badges || [])];
             if (h.badge_id && !performerBadges.includes(h.badge_id)) {
                 performerBadges.push(h.badge_id);
@@ -207,6 +214,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ players, currentSession, financ
         fetchHumiliations();
         onUpdatePlayer();
         alert("CRIME CONFIRMADO! A moral foi ajustada e a medalha entregue.");
+    };
+
+    const handleDeleteHumiliation = async (id: string) => {
+        const { error } = await supabase.from('humiliations').delete().eq('id', id);
+        if (!error) {
+            fetchHumiliations();
+        }
     };
 
     const handleGiveBadge = async (playerId: string, badgeId: string) => {
@@ -230,398 +244,449 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ players, currentSession, financ
         }
     };
 
+    const handleApplyMoralReset = async () => {
+        if (!confirm('DESEJA RESETAR A MORAL DE TODOS OS VICIADOS PARA 100? ISSO É IRREVERSÍVEL.')) return;
+
+        setLoading(true);
+        try {
+            const { error } = await supabase
+                .from('players')
+                .update({ moral_score: 100 })
+                // Removido filtro restritivo para garantir que TODOS sejam resetados
+                .filter('id', 'neq', '00000000-0000-0000-0000-000000000000'); // Filtro dummy para garantir execução do update
+
+            if (error) throw error;
+
+            alert('MORAL RESETADA! O EQUILÍBRIO FOI RESTABELECIDO PARA TODOS.');
+            onUpdatePlayer();
+        } catch (err: any) {
+            console.error('Erro no reset:', err);
+            alert(`ERRO AO RESETAR: ${err.message || 'Erro desconhecido'}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const TabButton = ({ id, label, icon }: { id: any, label: string, icon: string }) => (
+        <button
+            onClick={() => setActiveTab(id)}
+            className={`flex-1 flex flex-col items-center py-4 px-2 transition-all border-b-2 font-oswald uppercase italic tracking-tighter relative ${activeTab === id ? 'border-red-600 text-white bg-red-600/5' : 'border-neutral-800 text-neutral-500 hover:text-white'}`}
+        >
+            <span className="text-xl mb-1">{icon}</span>
+            <span className="text-[10px] font-black">{label}</span>
+            {activeTab === id && <div className="absolute top-0 w-1 h-1 bg-red-600 rounded-full animate-ping"></div>}
+        </button>
+    );
+
     return (
-        <div className="max-w-6xl mx-auto p-4 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
-            <div className="flex items-center justify-between border-b border-neutral-800 pb-4 mb-8">
+        <div className="max-w-4xl mx-auto animate-slide-up pb-24">
+            <div className="mb-8 flex items-end justify-between px-2">
                 <div>
-                    <h2 className="text-4xl font-oswald font-black text-white uppercase italic tracking-tighter">Comando Central</h2>
-                    <p className="text-neutral-500 font-mono text-[10px] uppercase tracking-[0.5em]">Acesso Administrativo • Sigilo Absoluto</p>
+                    <h2 className="section-title text-4xl md:text-5xl text-red-600 uppercase italic">Comando <span className="text-white">Central</span></h2>
+                    <p className="text-neutral-500 font-mono text-[10px] uppercase tracking-[0.4em] mt-1">Nível de Autoridade: Administrador</p>
                 </div>
-                <div className="flex gap-2">
-                    <div className="bg-neutral-900 border border-neutral-800 px-4 py-2 text-center">
-                        <p className="text-[10px] text-neutral-600 font-black uppercase tracking-widest">Caixa Real</p>
-                        <p className="text-xl font-oswald text-green-500">R$ {finances?.total_balance || 0}</p>
-                    </div>
+                <div className="hidden md:block px-4 py-2 glass-panel border-red-900/20 rounded-xl">
+                    <span className="text-[10px] font-mono text-red-500 animate-pulse">● FULL_CONTROL_ENABLED</span>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* 💀 SISTEMA DE PENITÊNCIA (HUMILHAÇÕES PENDENTES) */}
-                <section className="bg-neutral-900 border-2 border-red-900 p-6 space-y-6 lg:col-span-2 shadow-[0_0_50px_rgba(153,27,27,0.1)]">
-                    <h3 className="text-xl font-oswald text-red-600 uppercase italic flex items-center gap-3">
-                        <span className="animate-pulse">💀</span> Tribunal da Humilhação (Pedidos Pendentes)
-                    </h3>
+            <div className="glass-panel border-neutral-800/50 rounded-[32px] overflow-hidden backdrop-blur-2xl">
+                <div className="flex border-b border-neutral-800/50 bg-neutral-900/20 overflow-x-auto no-scrollbar">
+                    <TabButton id="session" label="Sessão" icon="⏱️" />
+                    <TabButton id="players" label="Peladeiros" icon="👥" />
+                    <TabButton id="finances" label="Caixa" icon="💰" />
+                    <TabButton id="system" label="Sistema" icon="⚙️" />
+                </div>
 
-                    <div className="space-y-4">
-                        {pendingHumiliations.length === 0 ? (
-                            <p className="text-neutral-700 font-mono text-xs uppercase italic">Nenhuma presepada reportada até agora...</p>
-                        ) : (
-                            pendingHumiliations.map(h => {
-                                const performer = players.find(p => p.id === h.performer_id);
-                                const victim = players.find(p => p.id === h.victim_id);
-                                return (
-                                    <div key={h.id} className="bg-black border border-neutral-800 p-4 flex flex-col gap-4">
-                                        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                                            <div className="flex items-center gap-4">
-                                                <div className="text-center">
-                                                    <p className="text-[9px] text-green-500 font-black uppercase">Executor</p>
-                                                    <p className="text-white font-oswald uppercase">{performer?.nickname || '???'}</p>
-                                                </div>
-                                                <div className="text-red-600 font-black text-xl italic animate-bounce">
-                                                    ➔ {h.type.toUpperCase()} ➔
-                                                </div>
-                                                <div className="text-center">
-                                                    <p className="text-[9px] text-red-500 font-black uppercase">Vítima</p>
-                                                    <p className="text-white font-oswald uppercase">{victim?.nickname || '???'}</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="bg-neutral-800/50 p-3 flex-1 border-l-2 border-red-600">
-                                                <p className="text-[9px] text-neutral-500 uppercase font-black mb-1">Relato do Ocorrido:</p>
-                                                <p className="text-xs text-white italic font-mono">"{h.description || 'Sem detalhes...'}"</p>
+                <div className="p-6 md:p-8">
+                    {activeTab === 'session' && (
+                        <div className="space-y-8 animate-slide-up">
+                            <section className="bg-neutral-900/40 p-6 rounded-2xl border border-neutral-800/50">
+                                <h3 className="text-xl font-oswald italic uppercase text-yellow-500 mb-6 flex items-center gap-2">
+                                    <span>⚽</span> Controle de Sessão
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-4">
+                                        <div className="p-4 bg-black/40 rounded-xl border border-neutral-800">
+                                            <p className="text-[10px] text-neutral-500 uppercase font-black mb-1">Status Real (Cálculo IA)</p>
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-3 h-3 rounded-full ${currentSession?.votingOpen ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]'}`}></div>
+                                                <span className="text-lg font-oswald text-white uppercase italic">{currentSession?.votingOpen ? 'Votação Aberta' : 'Votação Fechada'}</span>
                                             </div>
                                         </div>
 
-                                        <div className="flex flex-col md:flex-row gap-4 items-center border-t border-neutral-800 pt-4">
-                                            <div className="flex-1 w-full">
-                                                <p className="text-[9px] text-neutral-500 uppercase font-black mb-2">Condecorar com Badge? (Opcional):</p>
-                                                <select
-                                                    value={h.badge_id || ''}
-                                                    onChange={async (e) => {
-                                                        const newVal = e.target.value;
-                                                        await supabase.from('humiliations').update({ badge_id: newVal }).eq('id', h.id);
-                                                        fetchHumiliations();
-                                                    }}
-                                                    className="w-full bg-black border border-neutral-800 p-2 text-[10px] text-white font-mono outline-none focus:border-red-600 appearance-none"
+                                        <div className="space-y-2">
+                                            <p className="text-[10px] text-neutral-500 uppercase font-black px-1">Modo de Votação</p>
+                                            <div className="grid grid-cols-1 gap-2">
+                                                <button
+                                                    onClick={() => updateSession({ manualVotingStatus: 'auto' })}
+                                                    className={`py-3 px-4 rounded-xl border font-oswald uppercase italic text-xs transition-all flex items-center justify-between ${currentSession?.manualVotingStatus === 'auto' ? 'bg-white text-black border-white' : 'bg-neutral-800 text-neutral-400 border-neutral-700 hover:border-neutral-600'}`}
                                                 >
-                                                    <option value="">Nenhuma Badge</option>
+                                                    <span>AUTOMÁTICO (Seg. 21h-00h)</span>
+                                                    {currentSession?.manualVotingStatus === 'auto' && <span>✓</span>}
+                                                </button>
+                                                <button
+                                                    onClick={() => updateSession({ manualVotingStatus: 'open' })}
+                                                    className={`py-3 px-4 rounded-xl border font-oswald uppercase italic text-xs transition-all flex items-center justify-between ${currentSession?.manualVotingStatus === 'open' ? 'bg-green-600/20 text-green-500 border-green-600/50' : 'bg-neutral-800 text-neutral-400 border-neutral-700 hover:border-neutral-600'}`}
+                                                >
+                                                    <span>FORÇAR ABRIR AGORA</span>
+                                                    {currentSession?.manualVotingStatus === 'open' && <span>⚡</span>}
+                                                </button>
+                                                <button
+                                                    onClick={() => updateSession({ manualVotingStatus: 'closed' })}
+                                                    className={`py-3 px-4 rounded-xl border font-oswald uppercase italic text-xs transition-all flex items-center justify-between ${currentSession?.manualVotingStatus === 'closed' ? 'bg-red-600/20 text-red-500 border-red-600/50' : 'bg-neutral-800 text-neutral-400 border-neutral-700 hover:border-neutral-600'}`}
+                                                >
+                                                    <span>FORÇAR FECHAR AGORA</span>
+                                                    {currentSession?.manualVotingStatus === 'closed' && <span>🔒</span>}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <p className="text-[10px] text-neutral-500 uppercase font-black px-1">Mudar Estado Global</p>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <button
+                                                onClick={() => handleUpdateStatus('resenha')}
+                                                className={`p-4 rounded-xl border font-oswald uppercase italic text-xs transition-all ${currentSession?.status === 'resenha' ? 'bg-white text-black border-white' : 'bg-neutral-800 text-neutral-400 border-neutral-700 hover:border-neutral-500'}`}
+                                            >RE-S-E-N-H-A</button>
+                                            <button
+                                                onClick={() => handleUpdateStatus('partida')}
+                                                className={`p-4 rounded-xl border font-oswald uppercase italic text-xs transition-all ${currentSession?.status === 'partida' ? 'bg-white text-black border-white' : 'bg-neutral-800 text-neutral-400 border-neutral-700 hover:border-neutral-500'}`}
+                                            >P-A-R-T-I-D-A</button>
+                                            <button
+                                                onClick={() => handleUpdateStatus('em_jogo')}
+                                                className={`p-4 rounded-xl border font-oswald uppercase italic text-xs transition-all ${currentSession?.status === 'em_jogo' ? 'bg-blue-600 text-white border-blue-500' : 'bg-neutral-800 text-neutral-400 border-neutral-700 hover:border-neutral-500'}`}
+                                            >EM JOGO (LIVE)</button>
+                                            <button
+                                                onClick={() => handleUpdateStatus('finalizado')}
+                                                className={`p-4 rounded-xl border font-oswald uppercase italic text-xs transition-all ${currentSession?.status === 'finalizado' ? 'bg-red-600 text-white border-red-500' : 'bg-neutral-800 text-neutral-400 border-neutral-700 hover:border-neutral-500'}`}
+                                            >FINALIZAR</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            {/* TRIBUNAL DA HUMILHAÇÃO */}
+                            <section className="bg-neutral-900/40 p-6 rounded-2xl border border-neutral-800/50">
+                                <h3 className="text-xl font-oswald italic uppercase text-red-600 mb-6 flex items-center gap-2">
+                                    <span>💀</span> Tribunal da Humilhação ({pendingHumiliations.length})
+                                </h3>
+                                {pendingHumiliations.length === 0 ? (
+                                    <div className="p-8 text-center bg-black/20 rounded-xl border border-dashed border-neutral-800">
+                                        <p className="text-neutral-600 font-mono text-[10px] uppercase tracking-widest italic">Nenhuma infração reportada. O bueiro está em paz.</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {pendingHumiliations.map(hum => {
+                                            const performer = players.find(p => p.id === hum.performer_id);
+                                            const victim = players.find(p => p.id === hum.victim_id);
+                                            return (
+                                                <div key={hum.id} className="glass-panel p-5 rounded-2xl border-white/5 space-y-4">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[10px] font-mono text-neutral-500 uppercase">{new Date(hum.created_at).toLocaleTimeString()}</span>
+                                                        <span className="text-[10px] font-black font-oswald bg-red-900/20 text-red-500 px-3 py-1 rounded-full uppercase italic tracking-widest border border-red-900/30">Análise Requerida</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-4 bg-black/30 p-4 rounded-xl">
+                                                        <div className="text-center flex-1">
+                                                            <p className="text-[9px] text-green-500 uppercase font-black mb-1">Doido</p>
+                                                            <p className="text-sm font-oswald text-white uppercase italic">{performer?.nickname || hum.performerNickname}</p>
+                                                        </div>
+                                                        <div className="flex flex-col items-center">
+                                                            <span className="text-red-600 font-black animate-pulse">➔</span>
+                                                            <span className="text-[8px] text-neutral-600 font-mono uppercase font-black">{hum.type}</span>
+                                                        </div>
+                                                        <div className="text-center flex-1">
+                                                            <p className="text-[9px] text-red-500 uppercase font-black mb-1">Vítima</p>
+                                                            <p className="text-sm font-oswald text-white uppercase italic">{victim?.nickname || hum.victimNickname}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="p-3 bg-white/5 border border-white/10 rounded-xl">
+                                                        <p className="text-xs text-neutral-400 italic leading-relaxed">"{hum.description}"</p>
+                                                    </div>
+
+                                                    <div className="space-y-3">
+                                                        <p className="text-[9px] text-neutral-500 uppercase font-black mb-1">Condecorar com:</p>
+                                                        <select
+                                                            value={hum.badge_id || ''}
+                                                            onChange={(e) => {
+                                                                const newVal = e.target.value;
+                                                                const updated = pendingHumiliations.map(ph => ph.id === hum.id ? { ...ph, badge_id: newVal } : ph);
+                                                                setPendingHumiliations(updated);
+                                                            }}
+                                                            className="w-full bg-black border border-neutral-800 p-3 text-xs text-white uppercase font-oswald italic"
+                                                        >
+                                                            <option value="">Nenhuma Badge</option>
+                                                            {ALL_BADGES.map(b => (
+                                                                <option key={b.id} value={b.id}>{b.icon} {b.name}</option>
+                                                            ))}
+                                                        </select>
+
+                                                        <div className="grid grid-cols-2 gap-3">
+                                                            <button
+                                                                onClick={() => handleConfirmHumiliation(hum, true)}
+                                                                className="bg-green-600 hover:bg-green-500 text-white font-oswald font-black uppercase italic py-3 rounded-xl text-[10px] tracking-widest transition-all"
+                                                            >CONFIRMAR</button>
+                                                            <button
+                                                                onClick={() => handleConfirmHumiliation(hum, false)}
+                                                                className="bg-neutral-800 hover:bg-neutral-700 text-white font-oswald font-black uppercase italic py-3 rounded-xl text-[10px] tracking-widest transition-all border border-neutral-700"
+                                                            >RECUSAR</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </section>
+                        </div>
+                    )}
+
+                    {activeTab === 'players' && (
+                        <div className="space-y-6 animate-slide-up">
+                            <section className="bg-neutral-900/40 p-6 rounded-2xl border border-neutral-800/50">
+                                <h3 className="text-xl font-oswald italic uppercase text-blue-500 mb-6 flex items-center gap-2">
+                                    <span>👥</span> Gestão de Atletas
+                                </h3>
+
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-black/40 p-4 rounded-xl border border-neutral-800 mb-8">
+                                    <div className="text-center">
+                                        <p className="text-[10px] text-neutral-500 uppercase font-black mb-1">Atletas</p>
+                                        <p className="text-2xl font-oswald text-white font-black">{players.length}</p>
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="text-[10px] text-neutral-500 uppercase font-black mb-1">Gols</p>
+                                        <p className="text-2xl font-oswald text-white font-black">{players.reduce((acc, p) => acc + p.goals, 0)}</p>
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="text-[10px] text-neutral-500 uppercase font-black mb-1">Moral Méd.</p>
+                                        <p className="text-2xl font-oswald text-white font-black">{(players.reduce((acc, p) => acc + p.moralScore, 0) / players.length).toFixed(0)}</p>
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="text-[10px] text-neutral-500 uppercase font-black mb-1">Dívidas</p>
+                                        <p className="text-2xl font-oswald text-red-500 font-black">{players.filter(p => !p.isPaid).length}</p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <p className="text-[10px] text-neutral-500 uppercase font-black px-1">Comandos de Reset</p>
+                                    <button
+                                        onClick={handleApplyMoralReset}
+                                        disabled={loading}
+                                        className="w-full p-5 bg-white text-black font-oswald font-black uppercase text-sm italic tracking-[0.2em] rounded-2xl hover:bg-neutral-200 transition-all shadow-[0_0_30px_rgba(255,255,255,0.1)] active:scale-[0.98]"
+                                    >
+                                        {loading ? 'RE-SETANDO...' : 'RESET GERAL DE MORAL (100)'}
+                                    </button>
+                                </div>
+
+                                <div className="mt-8 border-t border-neutral-800 pt-8">
+                                    <h4 className="text-xs font-mono uppercase text-neutral-500 tracking-widest mb-4">Registro de Ocorrência Manual</h4>
+                                    <div className="space-y-4">
+                                        <select
+                                            value={selectedPlayerId}
+                                            onChange={(e) => setSelectedPlayerId(e.target.value)}
+                                            className="w-full bg-black border border-neutral-800 p-4 text-white font-oswald uppercase text-sm italic rounded-xl"
+                                        >
+                                            <option value="">Escolha o alvo...</option>
+                                            {players.sort((a, b) => a.nickname.localeCompare(b.nickname)).map(p => <option key={p.id} value={p.id}>{p.nickname}</option>)}
+                                        </select>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <select
+                                                value={eventType}
+                                                onChange={(e) => setEventType(e.target.value as any)}
+                                                className="bg-black border border-neutral-800 p-4 text-white font-oswald uppercase text-xs italic rounded-xl"
+                                            >
+                                                <option value="resenha">Resenha Comum</option>
+                                                <option value="puskas">Gol Puskas (+15)</option>
+                                                <option value="vexame">Bisonhada (-15)</option>
+                                                <option value="quebra_bola">Caneleiro (-15)</option>
+                                            </select>
+                                            <button
+                                                onClick={handleAddEvent}
+                                                className="bg-red-700 hover:bg-red-600 text-white font-oswald font-black uppercase italic text-xs tracking-widest rounded-xl transition-all"
+                                            >PROTOCOLAR</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mt-8 border-t border-neutral-800 pt-8">
+                                    <h4 className="text-xs font-mono uppercase text-neutral-500 tracking-widest mb-4">Gestão de Badges</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-64 overflow-y-auto pr-2 custom-scrollbar">
+                                        {players.sort((a, b) => a.nickname.localeCompare(b.nickname)).map(p => (
+                                            <div key={p.id} className="bg-black/30 border border-neutral-800 p-3 rounded-xl flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <img src={p.photo} className="w-8 h-8 object-cover rounded-full" />
+                                                    <p className="text-[10px] font-oswald text-white uppercase italic">{p.nickname}</p>
+                                                </div>
+                                                <select
+                                                    onChange={(e) => {
+                                                        if (e.target.value) {
+                                                            handleGiveBadge(p.id, e.target.value);
+                                                            e.target.value = "";
+                                                        }
+                                                    }}
+                                                    className="bg-neutral-900 border border-neutral-800 text-[8px] text-neutral-500 uppercase p-1 rounded"
+                                                >
+                                                    <option value="">Badge...</option>
                                                     {ALL_BADGES.map(b => (
                                                         <option key={b.id} value={b.id}>{b.icon} {b.name}</option>
                                                     ))}
                                                 </select>
                                             </div>
-                                            <div className="flex gap-2 w-full md:w-auto">
-                                                <button
-                                                    onClick={() => handleConfirmHumiliation(h, false)}
-                                                    className="flex-1 md:flex-none px-6 py-3 border border-neutral-700 text-neutral-500 hover:bg-white hover:text-black transition-all text-[10px] font-black uppercase italic"
-                                                >Falsidade (Recusar)</button>
-                                                <button
-                                                    onClick={() => handleConfirmHumiliation(h, true)}
-                                                    className="flex-1 md:flex-none px-6 py-3 bg-red-700 hover:bg-red-600 text-white transition-all text-[10px] font-black uppercase italic shadow-[0_0_20px_rgba(185,28,28,0.2)]"
-                                                >É VERDADE (CONFIRMAR)</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })
-                        )}
-                    </div>
-                </section>
-
-                {/* 🏦 GESTÃO DO COFRE (NOVO) */}
-                <section className="bg-neutral-900 border border-neutral-800 p-6 space-y-6">
-                    <h3 className="text-lg font-oswald text-green-600 uppercase italic flex items-center gap-2 underline decoration-green-900">
-                        <span>🏦</span> O Cofre da Várzea
-                    </h3>
-
-                    <div className="space-y-4">
-                        <div className="flex gap-2">
-                            <div className="flex-1">
-                                <label className="text-[9px] text-neutral-500 uppercase font-black mb-1 block">Saldo Total em Mãos (R$)</label>
-                                <input
-                                    type="number"
-                                    value={tempBalance}
-                                    onChange={(e) => setTempBalance(e.target.value)}
-                                    className="w-full bg-black border border-neutral-800 p-3 text-white font-oswald text-xl outline-none focus:border-green-600"
-                                />
-                            </div>
-                            <button
-                                onClick={handleUpdateBalance}
-                                disabled={isSavingFinances}
-                                className="mt-5 px-6 bg-green-700 hover:bg-green-600 text-white font-black font-oswald uppercase italic tracking-widest transition-all"
-                            >
-                                {isSavingFinances ? 'UPDATING...' : 'SALVAR'}
-                            </button>
-                        </div>
-
-                        <div className="border-t border-neutral-800 pt-6">
-                            <label className="text-[9px] text-neutral-500 uppercase font-black mb-3 block">Objetivos da Pelada (Uniforme, Churrasco, etc)</label>
-                            <div className="space-y-2 mb-4">
-                                {finances?.goals?.map(goal => (
-                                    <div key={goal.id} className="bg-black/50 border border-neutral-800 p-3 flex justify-between items-center group">
-                                        <div>
-                                            <p className="text-white font-oswald text-xs uppercase">{goal.title}</p>
-                                            <p className="text-[9px] text-neutral-600 font-mono uppercase">Meta: R$ {goal.target}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-green-500 font-oswald font-bold leading-none">R$ {goal.current}</p>
-                                            <div className="w-20 h-1 bg-neutral-800 mt-1">
-                                                <div className="h-full bg-green-600" style={{ width: `${Math.min(100, (goal.current / goal.target) * 100)}%` }}></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
-                                <input
-                                    placeholder="Ex: Novo Uniforme"
-                                    value={newGoal.title}
-                                    onChange={(e) => setNewGoal({ ...newGoal, title: e.target.value })}
-                                    className="bg-black border border-neutral-800 p-2 text-xs text-white outline-none focus:border-green-600"
-                                />
-                                <input
-                                    placeholder="Meta R$"
-                                    type="number"
-                                    value={newGoal.target}
-                                    onChange={(e) => setNewGoal({ ...newGoal, target: e.target.value })}
-                                    className="bg-black border border-neutral-800 p-2 text-xs text-white outline-none focus:border-green-600"
-                                />
-                            </div>
-                            <button
-                                onClick={handleAddGoal}
-                                className="w-full mt-2 py-2 bg-neutral-800 hover:bg-neutral-700 text-white font-black font-oswald uppercase italic text-[10px] tracking-widest transition-all border border-neutral-700"
-                            >
-                                Adicionar Novo Objetivo
-                            </button>
-                        </div>
-                    </div>
-                </section>
-
-                {/* ⚔️ Gestão de Ocorrências */}
-                <section className="bg-neutral-900 border border-neutral-800 p-6 space-y-6">
-                    <h3 className="text-lg font-oswald text-red-600 uppercase italic flex items-center gap-2 underline decoration-red-900">
-                        <span>⚔️</span> Registro de Crimes & Atos de Bravura
-                    </h3>
-
-                    <div className="space-y-4">
-                        <div>
-                            <select
-                                value={selectedPlayerId}
-                                onChange={(e) => setSelectedPlayerId(e.target.value)}
-                                className="w-full bg-black border border-neutral-800 p-3 text-white font-oswald uppercase text-sm outline-none focus:border-red-900 transition-all appearance-none"
-                            >
-                                <option value="">Escolha o alvo...</option>
-                                {players.map(p => <option key={p.id} value={p.id}>{p.nickname}</option>)}
-                            </select>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <select
-                                value={eventType}
-                                onChange={(e) => setEventType(e.target.value as any)}
-                                className="w-full bg-black border border-neutral-800 p-3 text-white font-oswald uppercase text-sm outline-none focus:border-red-900 transition-all appearance-none"
-                            >
-                                <option value="resenha">Resenha Comum</option>
-                                <option value="puskas">Gol Puskas (Elite)</option>
-                                <option value="vexame">Bisonhada/Vexame</option>
-                                <option value="quebra_bola">Caneleiro Selvagem</option>
-                            </select>
-                            <div className={`p-3 border font-black font-oswald uppercase text-center text-sm ${eventType === 'puskas' ? 'border-yellow-600/30 text-yellow-500 bg-yellow-900/10' : 'border-red-900/30 text-red-600 bg-red-900/10'}`}>
-                                {eventType === 'puskas' ? '+15 Moral' : eventType === 'resenha' ? '0 Moral' : '-15 Moral'}
-                            </div>
-                        </div>
-
-                        <textarea
-                            value={eventDescription}
-                            onChange={(e) => setEventDescription(e.target.value)}
-                            placeholder="Descreva o ocorrido com o máximo de deboche..."
-                            className="w-full bg-black border border-neutral-800 p-3 h-24 text-white font-mono text-xs outline-none focus:border-red-900 transition-all resize-none"
-                        />
-
-                        <button
-                            onClick={handleAddEvent}
-                            className="w-full py-4 bg-red-700 hover:bg-red-800 text-white font-black font-oswald uppercase italic tracking-widest transition-all"
-                        >
-                            Protocolar na Fixa
-                        </button>
-                    </div>
-                </section>
-
-                {/* 💰 Controle de Pagamentos */}
-                <section className="bg-neutral-900 border border-neutral-800 p-6 lg:col-span-2">
-                    <div className="flex justify-between items-end mb-6">
-                        <h3 className="text-lg font-oswald text-yellow-600 uppercase italic flex items-center gap-2 underline decoration-yellow-900">
-                            💰 Cobrança & Dívida Ativa
-                        </h3>
-                        <div className="text-right">
-                            <p className="text-[9px] text-neutral-500 font-black uppercase">Pendências Totais</p>
-                            <p className="text-xl font-oswald text-red-600">R$ {players.reduce((acc, p) => acc + (p.isPaid ? 0 : 25), 0)}</p>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                        {players.map(p => (
-                            <div key={p.id} className={`flex items-center justify-between p-3 bg-black border transition-all ${p.isPaid ? 'border-neutral-800/50' : 'border-red-900/30 animate-pulse'}`}>
-                                <div className="flex items-center gap-3">
-                                    <img src={p.photo} className={`w-8 h-8 object-cover ${!p.isPaid ? 'grayscale-0 border-red-600' : 'grayscale border-neutral-800'}`} />
-                                    <div>
-                                        <p className="text-white font-oswald text-[11px] uppercase leading-none">{p.nickname}</p>
-                                        <p className={`text-[8px] font-mono uppercase ${p.isPaid ? 'text-neutral-600' : 'text-red-500 font-bold'}`}>
-                                            {p.isPaid ? 'OK • QUITADO' : 'DEVENDO R$ 25'}
-                                        </p>
+                                        ))}
                                     </div>
                                 </div>
-                                <button
-                                    onClick={() => handleTogglePaid(p)}
-                                    className={`px-3 py-1 border text-[9px] font-black uppercase tracking-tighter transition-all ${p.isPaid ? 'border-neutral-700 text-neutral-500 hover:bg-red-900/20 hover:text-red-500' : 'border-green-600 text-green-500 hover:bg-green-600 hover:text-black'}`}
-                                >
-                                    {p.isPaid ? 'Reabrir' : 'Recebido'}
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                </section>
+                            </section>
+                        </div>
+                    )}
 
-                {/* 🏟️ CONTROLE DE PARTIDA (LIVE) */}
-                {
-                    currentSession?.status === 'em_jogo' && (
-                        <section className="bg-neutral-900 border-2 border-blue-900 p-6 space-y-6 lg:col-span-2 shadow-[0_0_50px_rgba(37,99,235,0.1)]">
-                            <div className="flex justify-between items-center">
-                                <h3 className="text-xl font-oswald text-blue-500 uppercase italic flex items-center gap-2 underline decoration-blue-900">
-                                    <span className="animate-pulse">🏟️</span> Controle de Partida (Em Tempo Real)
+                    {activeTab === 'finances' && (
+                        <div className="space-y-6 animate-slide-up">
+                            <section className="bg-neutral-900/40 p-6 rounded-2xl border border-neutral-800/50">
+                                <h3 className="text-xl font-oswald italic uppercase text-emerald-500 mb-6 flex items-center gap-2">
+                                    <span>💰</span> Gestão do Caixa
                                 </h3>
-                            </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                {players.map(p => {
-                                    const isPresent = currentSession?.playersPresent?.includes(p.id);
-                                    if (!isPresent && (currentSession?.playersPresent?.length || 0) > 0) return null;
+                                <div className="p-6 bg-black/40 rounded-2xl border border-emerald-500/20 mb-8 flex items-center justify-between">
+                                    <div>
+                                        <p className="text-[10px] text-neutral-500 uppercase font-black mb-1">Total Disponível</p>
+                                        <div className="flex items-end gap-1">
+                                            <span className="text-4xl font-oswald text-emerald-500 font-black italic tracking-tighter">R$ {parseFloat(tempBalance).toFixed(2)}</span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={handleUpdateBalance}
+                                        className="p-3 bg-emerald-600/10 border border-emerald-500/30 text-emerald-500 rounded-lg hover:bg-emerald-500 hover:text-black transition-all"
+                                    >
+                                        {isSavingFinances ? '⏳' : '💾 SALVAR'}
+                                    </button>
+                                </div>
 
-                                    return (
-                                        <div key={p.id} className="bg-black border border-neutral-800 p-4 flex flex-col gap-3">
-                                            <div className="flex items-center gap-3">
-                                                <img src={p.photo} className="w-10 h-10 object-cover border border-neutral-800" />
+                                <div className="space-y-4">
+                                    <label className="text-[10px] text-neutral-500 uppercase font-black px-1">Ajuste Manual de Saldo</label>
+                                    <input
+                                        type="number"
+                                        value={tempBalance}
+                                        onChange={(e) => setTempBalance(e.target.value)}
+                                        className="w-full bg-black border border-neutral-800 p-5 text-white font-oswald text-2xl italic tracking-tighter outline-none focus:border-emerald-600 rounded-2xl"
+                                    />
+                                </div>
+
+                                <div className="mt-12">
+                                    <h4 className="text-xs font-mono uppercase text-neutral-500 tracking-widest mb-6 px-1 flex justify-between">
+                                        <span>Metas & Projetos</span>
+                                        <span className="text-emerald-500">{finances?.goals?.length || 0} Ativos</span>
+                                    </h4>
+
+                                    <div className="space-y-3 mb-8">
+                                        {finances?.goals?.map(goal => (
+                                            <div key={goal.id} className="bg-black/40 border border-neutral-800 p-4 rounded-xl flex justify-between items-center group hover:border-emerald-900/50 transition-all">
                                                 <div>
-                                                    <p className="text-white font-oswald text-sm uppercase">{p.nickname}</p>
-                                                    <div className="flex gap-2 text-[9px] font-mono uppercase text-neutral-500">
-                                                        <span>Gols: {p.goals}</span>
-                                                        <span>Ast: {p.assists}</span>
+                                                    <p className="text-white font-oswald text-sm uppercase italic">{goal.title}</p>
+                                                    <p className="text-[9px] text-neutral-600 font-mono uppercase tracking-widest">Meta: R$ {goal.target}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-emerald-500 font-oswald font-black italic">R$ {goal.current}</p>
+                                                    <div className="w-24 h-1 bg-neutral-800 rounded-full mt-1 overflow-hidden">
+                                                        <div className="h-full bg-emerald-600 shadow-[0_0_10px_rgba(16,185,129,0.5)]" style={{ width: `${Math.min(100, (goal.current / goal.target) * 100)}%` }}></div>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="flex gap-2">
+                                        ))}
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                        <input
+                                            placeholder="Título do Alvo"
+                                            value={newGoal.title}
+                                            onChange={(e) => setNewGoal({ ...newGoal, title: e.target.value })}
+                                            className="col-span-1 md:col-span-1 bg-black border border-neutral-800 p-4 text-xs text-white rounded-xl italic font-oswald uppercase"
+                                        />
+                                        <input
+                                            placeholder="Meta R$"
+                                            type="number"
+                                            value={newGoal.target}
+                                            onChange={(e) => setNewGoal({ ...newGoal, target: e.target.value })}
+                                            className="bg-black border border-neutral-800 p-4 text-xs text-white rounded-xl italic font-oswald uppercase"
+                                        />
+                                        <button
+                                            onClick={handleAddGoal}
+                                            className="bg-neutral-800 hover:bg-neutral-700 text-white font-oswald font-black uppercase italic text-[10px] tracking-widest rounded-xl transition-all border border-neutral-700"
+                                        >ADICIONAR</button>
+                                    </div>
+                                </div>
+
+                                <div className="mt-12 border-t border-neutral-800 pt-8">
+                                    <h4 className="text-xs font-mono uppercase text-neutral-500 tracking-widest mb-4">Cobrança de Mensalidade</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 h-64 overflow-y-auto pr-2 custom-scrollbar">
+                                        {players.sort((a, b) => a.nickname.localeCompare(b.nickname)).map(p => (
+                                            <div key={p.id} className={`flex items-center justify-between p-3 bg-black border transition-all rounded-xl ${p.isPaid ? 'border-neutral-800/50 opacity-60' : 'border-red-900/30 bg-red-900/5'}`}>
+                                                <div className="flex items-center gap-3">
+                                                    <img src={p.photo} className={`w-8 h-8 object-cover rounded-full ${p.isPaid ? 'grayscale' : 'border border-red-600'}`} />
+                                                    <div>
+                                                        <p className="text-white font-oswald text-[10px] uppercase leading-none italic">{p.nickname}</p>
+                                                        <p className={`text-[8px] font-mono uppercase mt-1 ${p.isPaid ? 'text-neutral-600' : 'text-red-500 font-bold'}`}>
+                                                            {p.isPaid ? 'OK' : 'PENDENTE'}
+                                                        </p>
+                                                    </div>
+                                                </div>
                                                 <button
-                                                    onClick={() => handleUpdateStat(p.id, 'goals')}
-                                                    className="flex-1 py-2 bg-green-900/20 border border-green-600/30 text-green-500 font-black font-oswald text-[10px] uppercase hover:bg-green-600 hover:text-black transition-all"
-                                                >+ GOL</button>
-                                                <button
-                                                    onClick={() => handleUpdateStat(p.id, 'assists')}
-                                                    className="flex-1 py-2 bg-blue-900/20 border border-blue-600/30 text-blue-500 font-black font-oswald text-[10px] uppercase hover:bg-blue-600 hover:text-black transition-all"
-                                                >+ ASSIST</button>
+                                                    onClick={() => handleTogglePaid(p)}
+                                                    className={`px-3 py-1 border text-[9px] font-black uppercase italic rounded-md transition-all ${p.isPaid ? 'border-neutral-700 text-neutral-500 hover:bg-neutral-800' : 'border-green-600 text-green-500 hover:bg-green-600 hover:text-black'}`}
+                                                >
+                                                    {p.isPaid ? 'REABRIR' : 'PAGO'}
+                                                </button>
                                             </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </section>
-                    )
-                }
-
-                <section className="bg-neutral-900 border border-neutral-800 p-6 lg:col-span-2">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                        <h3 className="text-lg font-oswald text-white uppercase italic flex items-center gap-2">
-                            <span>⏰</span> Planejamento & Votação (Ciclo Semanal)
-                        </h3>
-                        <div className="flex gap-2 w-full md:w-auto">
-                            <select
-                                value={currentSession?.matchDay ?? 1}
-                                onChange={(e) => updateSession({ matchDay: parseInt(e.target.value) })}
-                                className="bg-black border border-neutral-700 text-[10px] text-white font-black uppercase p-2 outline-none focus:border-white"
-                            >
-                                {['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'].map((day, idx) => (
-                                    <option key={idx} value={idx}>Dia da Pelada: {day}</option>
-                                ))}
-                            </select>
-                            <select
-                                value={currentSession?.manualVotingStatus ?? 'auto'}
-                                onChange={(e) => updateSession({ manualVotingStatus: e.target.value as any })}
-                                className="bg-black border border-neutral-700 text-[10px] text-white font-black uppercase p-2 outline-none focus:border-white"
-                            >
-                                <option value="auto">Modo: Automático (23:59)</option>
-                                <option value="open">Modo: SEMPRE ABERTO</option>
-                                <option value="closed">Modo: SEMPRE FECHADO</option>
-                            </select>
+                                        ))}
+                                    </div>
+                                </div>
+                            </section>
                         </div>
-                    </div>
+                    )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-                        <button
-                            onClick={() => updateSession({ votingOpen: true, status: 'votacao_aberta' })}
-                            className="py-4 border border-yellow-600/30 text-yellow-500 font-black font-oswald uppercase text-xs hover:bg-yellow-600 hover:text-black transition-all italic"
-                        >
-                            Abrir Chamada (Presença)
-                        </button>
-                        <button
-                            onClick={async () => {
-                                if (!currentSession) return;
-                                // Incrementar matches_played para todos os selecionados
-                                for (const p of players) {
-                                    if (currentSession.playersPresent?.includes(p.id)) {
-                                        const newMatches = (p.matchesPlayed || 0) + 1;
-                                        await supabase.from('players').update({ matches_played: newMatches }).eq('id', p.id);
-                                        // Verificar badge de presença
-                                        await checkAndAssignBadges({ ...p, matchesPlayed: newMatches });
-                                    }
-                                }
-                                updateSession({ status: 'em_jogo' });
-                                onUpdatePlayer();
-                            }}
-                            className="py-4 border border-blue-600/30 text-blue-500 font-black font-oswald uppercase text-xs hover:bg-blue-600 hover:text-black transition-all italic"
-                        >
-                            Apitar Início (Live)
-                        </button>
-                        <button
-                            onClick={() => currentSession && updateSession({ status: 'finalizado', votingOpen: true })}
-                            className="py-4 border border-red-600/30 text-red-500 font-black font-oswald uppercase text-xs hover:bg-red-600 hover:text-black transition-all italic"
-                        >
-                            Encerrar & Votar
-                        </button>
-                        <button
-                            onClick={() => { if (currentSession && confirm("Zerar semana?")) updateSession({ status: 'vago', votingOpen: false, manualVotingStatus: 'auto' }) }}
-                            className="py-4 border border-neutral-700 text-neutral-500 font-black font-oswald uppercase text-xs hover:bg-white hover:text-black transition-all italic"
-                        >
-                            Resetar Ciclo
-                        </button>
-                    </div>
-                </section>
-                <section className="bg-neutral-900 border border-neutral-800 p-6 lg:col-span-2">
-                    <h3 className="text-lg font-oswald text-purple-600 uppercase italic mb-6 flex items-center gap-2">
-                        <span>🏅</span> Loja de Condecorações (Badge Management)
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {players.map(p => (
-                            <div key={p.id} className="bg-black border border-neutral-800 p-4 space-y-3">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <img src={p.photo} className="w-8 h-8 rounded-full border border-neutral-700" />
-                                    <p className="text-xs font-black text-white uppercase">{p.nickname}</p>
-                                </div>
-                                <div className="flex flex-wrap gap-1">
-                                    {p.badges?.map(bid => (
-                                        <div key={bid} onClick={() => handleGiveBadge(p.id, bid)} className="cursor-pointer opacity-80 hover:opacity-100 hover:scale-110 transition-all">
-                                            <BadgeDisplay badgeId={bid} />
+                    {activeTab === 'system' && (
+                        <div className="space-y-6 animate-slide-up">
+                            <section className="bg-neutral-900/40 p-6 rounded-2xl border border-neutral-800/50">
+                                <h3 className="text-xl font-oswald italic uppercase text-neutral-400 mb-6 flex items-center gap-2">
+                                    <span>⚙️</span> Sistema de Segurança
+                                </h3>
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between p-5 bg-black/40 rounded-2xl border border-neutral-800 group hover:border-red-900/30 transition-all">
+                                        <div>
+                                            <p className="text-white font-oswald uppercase italic text-sm">Modo de Quarentena</p>
+                                            <p className="text-[9px] text-neutral-600 font-mono uppercase tracking-widest">Trancar app para manutenção</p>
                                         </div>
-                                    ))}
+                                        <div className="w-12 h-6 bg-neutral-800 rounded-full p-1 cursor-not-allowed opacity-50">
+                                            <div className="w-4 h-4 bg-neutral-600 rounded-full"></div>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={() => onUpdateFinances()}
+                                        className="w-full flex items-center justify-between p-5 bg-black/40 rounded-2xl border border-neutral-800 hover:border-blue-900/30 transition-all"
+                                    >
+                                        <div>
+                                            <p className="text-white font-oswald uppercase italic text-sm">Sincronização Forçada</p>
+                                            <p className="text-[9px] text-neutral-600 font-mono uppercase tracking-widest">Update manual do Supabase DB</p>
+                                        </div>
+                                        <span className="text-blue-500 font-black animate-spin-slow text-xl">↻</span>
+                                    </button>
                                 </div>
-                                <select
-                                    onChange={(e) => {
-                                        if (e.target.value) {
-                                            handleGiveBadge(p.id, e.target.value);
-                                            e.target.value = "";
-                                        }
-                                    }}
-                                    className="w-full bg-neutral-900 border border-neutral-800 p-2 text-[9px] text-neutral-500 uppercase font-black outline-none focus:border-purple-600"
-                                >
-                                    <option value="">Condecorar / Retirar...</option>
-                                    {ALL_BADGES.map(b => (
-                                        <option key={b.id} value={b.id}>{b.icon} {b.name}</option>
-                                    ))}
-                                </select>
+                            </section>
+
+                            <div className="pt-12 text-center">
+                                <div className="inline-block p-4 border border-dashed border-neutral-800 rounded-2xl">
+                                    <p className="text-[8px] font-mono text-neutral-700 uppercase tracking-[0.5em] font-black">STABLE_REL_v4.5.1_XP_PRO</p>
+                                    <p className="text-[8px] font-mono text-neutral-800 uppercase tracking-widest mt-2">Active Protocol: {currentSession?.id || 'NO_SESSION'}</p>
+                                    <p className="text-[7px] font-mono text-neutral-900 uppercase mt-4 opacity-50">DESIGNED BY ANTIGRAVITY FOR FDP_ELITE</p>
+                                </div>
                             </div>
-                        ))}
-                    </div>
-                </section>
-            </div >
-        </div >
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
     );
 };
 

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Player, HeritageItem } from '../types';
 import BadgeDisplay from './BadgeDisplay';
 import { aiService } from '../services/geminiService';
+import { moralService } from '../services/moralService';
 import { supabase } from '../services/supabaseClient';
 import imageCompression from 'browser-image-compression';
 
@@ -26,7 +27,7 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
   const [showReportForm, setShowReportForm] = useState<'caneta' | 'chapeu' | 'humilhacao' | null>(null);
 
   // Estados para novas conquistas
-  const [newHeritage, setNewHeritage] = useState({ title: '', photo: '', type: 'album' as 'album' | 'trophy' });
+  const [newHeritage, setNewHeritage] = useState({ title: '', photo: '', type: 'album' as 'album' | 'trophy', tagged: [] as string[] });
   const [tempFile, setTempFile] = useState<File | null>(null);
   const [tempPreview, setTempPreview] = useState<string | null>(null);
   // Estados para troca de foto de perfil
@@ -35,11 +36,80 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
   const fileInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
+  // Estados de Interação Social
+  const [selectedAlbumItem, setSelectedAlbumItem] = useState<HeritageItem | null>(null);
+  const [albumInteractions, setAlbumInteractions] = useState<any[]>([]);
+  const [newComment, setNewComment] = useState("");
+  const [isLiking, setIsLiking] = useState(false);
+  const [interactionLoading, setInteractionLoading] = useState(false);
+  const [allPlayersSmall, setAllPlayersSmall] = useState<Player[]>([]);
+
   const isOwner = currentUser?.id === player.id;
 
   useEffect(() => {
     fetchExtras();
+    fetchPlayersList();
   }, [player.id]);
+
+  useEffect(() => {
+    if (selectedAlbumItem) {
+      fetchInteractions(selectedAlbumItem.id);
+    }
+  }, [selectedAlbumItem]);
+
+  const fetchPlayersList = async () => {
+    const { data } = await supabase.from('players').select('id, nickname, photo').order('nickname');
+    if (data) setAllPlayersSmall(data as any);
+  };
+
+  const fetchInteractions = async (heritageId: string) => {
+    setInteractionLoading(true);
+    const { data } = await supabase
+      .from('heritage_interactions')
+      .select('*, players(nickname, photo)')
+      .eq('heritage_id', heritageId)
+      .order('created_at', { ascending: true });
+    if (data) setAlbumInteractions(data);
+    setInteractionLoading(false);
+  };
+
+  const handlePostInteraction = async (type: 'comment' | 'insult') => {
+    if (!currentUser || !selectedAlbumItem || !newComment.trim()) return;
+    const { error } = await supabase.from('heritage_interactions').insert([{
+      heritage_id: selectedAlbumItem.id,
+      player_id: currentUser.id,
+      type,
+      content: newComment
+    }]);
+    if (!error) {
+      setNewComment("");
+      fetchInteractions(selectedAlbumItem.id);
+    }
+  };
+
+  const handleLike = async () => {
+    if (!currentUser || !selectedAlbumItem || isLiking) return;
+    setIsLiking(true);
+    const { data: existing } = await supabase
+      .from('heritage_interactions')
+      .select('id')
+      .eq('heritage_id', selectedAlbumItem.id)
+      .eq('player_id', currentUser.id)
+      .eq('type', 'like')
+      .single();
+
+    if (existing) {
+      await supabase.from('heritage_interactions').delete().eq('id', existing.id);
+    } else {
+      await supabase.from('heritage_interactions').insert([{
+        heritage_id: selectedAlbumItem.id,
+        player_id: currentUser.id,
+        type: 'like'
+      }]);
+    }
+    fetchInteractions(selectedAlbumItem.id);
+    setIsLiking(false);
+  };
 
   const fetchExtras = async () => {
     const { data: hData } = await supabase.from('heritage').select('*').eq('player_id', player.id).order('date', { ascending: false });
@@ -61,24 +131,21 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
 
     setLoadingAi(true);
     try {
-      const stats = `Gols: ${player.goals}, Assistêncas: ${player.assists}, Moral: ${player.moralScore}`;
-      setAiAnalysis("Analisando sua ruindade...");
-      const dossier = await aiService.generatePlayerDossier(
-        player.nickname,
-        stats, player.moralScore, "");
+      // Agora usamos o sistema hardcoded para economizar API
+      const commentary = moralService.getMoralCommentary(player.moralScore, player.nickname);
+      setAiAnalysis(commentary);
 
-      // Salvar no banco para cache
+      // Salvar no banco para cache e persistência (mesmo sendo hardcoded, mantemos o campo)
       await supabase
         .from('players')
         .update({
-          ai_dossier: dossier,
+          ai_dossier: commentary,
           last_ai_update: new Date().toISOString()
         })
         .eq('id', player.id);
 
-      setAiAnalysis(dossier || "IA sem palavras para esse fenômeno.");
     } catch (e) {
-      setAiAnalysis("Escritório da IA fechado.");
+      setAiAnalysis("Sindicato dos Bagres em greve.");
     } finally {
       setLoadingAi(false);
     }
@@ -199,12 +266,13 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
           title: newHeritage.title,
           photo: publicUrl,
           type: newHeritage.type,
+          tagged_players: newHeritage.tagged,
           date: new Date().toISOString().split('T')[0]
         }]);
 
         if (dbError) throw new Error("Erro no Banco: " + dbError.message);
 
-        setNewHeritage({ title: '', photo: '', type: 'album' });
+        setNewHeritage({ title: '', photo: '', type: 'album', tagged: [] });
         setTempFile(null);
         setTempPreview(null);
         fetchExtras();
@@ -258,9 +326,9 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
       }
 
       setHeritageItems(prev => prev.filter(item => item.id !== id));
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("Erro ao apagar o rastro da sua vergonha.");
+      alert("Erro ao apagar: " + (err.message || "Verifique as permissões de DELETE no Supabase."));
     }
   };
 
@@ -415,6 +483,28 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
                       onClick={() => setNewHeritage({ ...newHeritage, type: 'trophy' })}
                       className={`flex-1 text-[9px] font-black px-2 border transition-all ${newHeritage.type === 'trophy' ? 'bg-yellow-600 text-black border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.3)]' : 'border-neutral-800 text-neutral-500 hover:text-white'}`}
                     >GLÓRIA (TROFÉU)</button>
+                  </div>
+                </div>
+
+                {/* Tagging System */}
+                <div className="space-y-2">
+                  <p className="text-[9px] font-black text-neutral-500 uppercase">Marcar Viciados na Foto:</p>
+                  <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 bg-black/40 border border-neutral-800 rounded-lg">
+                    {allPlayersSmall.filter(p => p.id !== player.id).map(p => (
+                      <button
+                        key={p.id}
+                        onClick={() => {
+                          const isTagged = newHeritage.tagged.includes(p.id);
+                          setNewHeritage({
+                            ...newHeritage,
+                            tagged: isTagged ? newHeritage.tagged.filter(tid => tid !== p.id) : [...newHeritage.tagged, p.id]
+                          });
+                        }}
+                        className={`text-[9px] px-2 py-1 border transition-all rounded-full ${newHeritage.tagged.includes(p.id) ? 'bg-red-600 border-red-500 text-white' : 'border-neutral-800 text-neutral-500 hover:border-neutral-600'}`}
+                      >
+                        @{p.nickname}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
@@ -649,7 +739,7 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
                 <div
                   key={item.id}
                   className="group relative aspect-square bg-neutral-900 border border-neutral-800 overflow-hidden cursor-pointer"
-                  onClick={() => setFullscreenImage(item.photo)}
+                  onClick={() => setSelectedAlbumItem(item)}
                 >
                   {isOwner && (
                     <button
@@ -664,6 +754,9 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
                   <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity p-6 flex flex-col justify-end">
                     <p className="text-xs font-black font-oswald text-white uppercase leading-tight transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">{item.title}</p>
                     <p className="text-[9px] font-mono text-red-600 mt-2 font-bold">{item.date}</p>
+                    {item.tagged_players && item.tagged_players.length > 0 && (
+                      <p className="text-[8px] text-neutral-400 font-mono mt-1 italic">com {item.tagged_players.length} viciados</p>
+                    )}
                   </div>
                 </div>
               ))}
@@ -684,8 +777,105 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
         </div>
       </div>
 
-      {/* MODAL FULLSCREEN */}
-      {fullscreenImage && (
+      {/* MODAL FULLSCREEN + SOCIAL PANEL */}
+      {selectedAlbumItem && (
+        <div className="fixed inset-0 z-[200] bg-black/98 flex flex-col md:flex-row animate-in fade-in duration-300">
+          <button
+            onClick={() => setSelectedAlbumItem(null)}
+            className="absolute top-4 right-4 z-[210] text-neutral-500 hover:text-white text-2xl p-2 bg-black/40 rounded-full"
+          >✕</button>
+
+          {/* Imagem */}
+          <div className="flex-1 flex items-center justify-center p-4 md:p-12 bg-black/50">
+            <div className="relative group max-w-full max-h-full">
+              <img
+                src={selectedAlbumItem.photo}
+                className="max-w-full max-h-[80vh] object-contain shadow-[0_0_100px_rgba(255,0,0,0.1)] rounded-lg"
+              />
+              {/* Tagged Players labels */}
+              {selectedAlbumItem.tagged_players && selectedAlbumItem.tagged_players.length > 0 && (
+                <div className="absolute bottom-4 left-4 flex flex-wrap gap-2">
+                  {selectedAlbumItem.tagged_players.map(tid => {
+                    const tPlayer = allPlayersSmall.find(p => p.id === tid);
+                    return tPlayer ? (
+                      <span key={tid} className="bg-black/60 backdrop-blur-md border border-white/10 px-3 py-1 rounded-full text-[10px] font-black text-white italic">
+                        @{tPlayer.nickname}
+                      </span>
+                    ) : null;
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Social Panel */}
+          <div className="w-full md:w-[400px] border-l border-neutral-800 bg-neutral-900/90 backdrop-blur-3xl flex flex-col h-full overflow-hidden">
+            <div className="p-6 border-b border-neutral-800">
+              <h3 className="text-xl font-oswald font-black uppercase italic text-white leading-none">{selectedAlbumItem.title}</h3>
+              <p className="text-[10px] font-mono text-neutral-500 uppercase mt-2">{selectedAlbumItem.date}</p>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
+              <div className="flex items-center gap-6">
+                <button
+                  onClick={handleLike}
+                  className={`flex items-center gap-2 group transition-all ${albumInteractions.some(i => i.player_id === currentUser?.id && i.type === 'like') ? 'text-red-500' : 'text-neutral-500'}`}
+                >
+                  <span className="text-2xl group-active:scale-125 transition-transform">{albumInteractions.some(i => i.player_id === currentUser?.id && i.type === 'like') ? '❤️' : '🤍'}</span>
+                  <span className="font-oswald font-black italic">{albumInteractions.filter(i => i.type === 'like').length}</span>
+                </button>
+                <div className="flex items-center gap-2 text-neutral-400">
+                  <span className="text-xl">💬</span>
+                  <span className="font-oswald font-black italic">{albumInteractions.filter(i => i.type !== 'like').length}</span>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {interactionLoading ? (
+                  <div className="py-20 text-center"><div className="w-6 h-6 border-2 border-red-600 border-t-transparent rounded-full animate-spin mx-auto"></div></div>
+                ) : albumInteractions.filter(i => i.type !== 'like').length === 0 ? (
+                  <p className="text-center py-10 text-[10px] font-mono text-neutral-600 uppercase italic">Ninguém falou nada... Seja o primeiro.</p>
+                ) : (
+                  albumInteractions.filter(i => i.type !== 'like').map(inter => (
+                    <div key={inter.id} className={`p-4 rounded-2xl border ${inter.type === 'insult' ? 'bg-red-900/10 border-red-900/30' : 'bg-black/40 border-neutral-800'}`}>
+                      <div className="flex items-center gap-3 mb-2">
+                        <img src={inter.players?.photo} className="w-6 h-6 rounded-full object-cover" />
+                        <span className={`text-[10px] font-black uppercase italic ${inter.type === 'insult' ? 'text-red-500' : 'text-neutral-400'}`}>@{inter.players?.nickname}</span>
+                        {inter.type === 'insult' && <span className="text-[8px] bg-red-600 text-white px-2 rounded-full font-black uppercase">Xingamento</span>}
+                      </div>
+                      <p className="text-sm text-neutral-200 leading-relaxed italic">"{inter.content}"</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {currentUser && (
+              <div className="p-6 bg-black/60 border-t border-neutral-800">
+                <textarea
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Deixa o xingamento ou comentário aqui..."
+                  className="w-full bg-neutral-900 border border-neutral-800 rounded-xl p-4 text-sm text-white focus:border-red-600 outline-none resize-none h-24 mb-4"
+                />
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => handlePostInteraction('comment')}
+                    className="py-3 bg-white text-black font-oswald font-black uppercase italic text-xs hover:bg-neutral-200 transition-all rounded-xl"
+                  >COMENTAR</button>
+                  <button
+                    onClick={() => handlePostInteraction('insult')}
+                    className="py-3 bg-red-800 text-white font-oswald font-black uppercase italic text-xs hover:bg-red-700 transition-all rounded-xl"
+                  >ESCULACHO</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL FULLSCREEN LEGACY (Fallback/Others) */}
+      {fullscreenImage && !selectedAlbumItem && (
         <div
           className="fixed inset-0 z-[200] bg-black/95 flex items-center justify-center p-4 md:p-10 cursor-zoom-out animate-in fade-in duration-300"
           onClick={() => setFullscreenImage(null)}

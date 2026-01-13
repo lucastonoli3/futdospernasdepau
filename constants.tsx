@@ -2,6 +2,15 @@
 import { Badge, Player, PlayerStatus, Position } from './types';
 
 export const ALL_BADGES: Badge[] = [
+  // --- LEGADO, HONRA & AUTORIDADE (TOP TIER) ---
+  { id: 'teg1', name: 'TEG - Esquadrão Grená', icon: '/badges/teg.png', description: 'Espancador de rio branquense. Traje de gala é a peita da organizada.', category: 'Elite' },
+  { id: 'leg1', name: 'Fundador da Pelada', icon: '👑', description: 'O patriarca que começou tudo isso aqui. Respeite o ancião.', category: 'Elite' },
+  { id: 'leg2', name: 'Administrador da Biqueira', icon: '👮‍♂️', description: 'Quem manda nessa porra. A palavra final é dele.', category: 'Elite' },
+  { id: 'leg3', name: 'Bola de Ouro Suprema', icon: '🥇', description: 'O ápice da excelência técnica e moral. O melhor dos melhores.', category: 'Elite' },
+  { id: 'dev1', name: 'Mago do Código', icon: '🧙‍♂️', description: 'O mago que fez essa porra toda, o mágico da programação', category: 'Architect' },
+  { id: 'leg4', name: 'Sócio Vitalício', icon: '🎟️', description: 'Parte inseparável da história desse bueiro.', category: 'Elite' },
+  { id: 'leg5', name: 'Embaixador da Várzea', icon: '🌍', description: 'Leva o nome do FDP por onde passa.', category: 'Elite' },
+
   // --- ORIGINAIS & FUNDAMENTAIS ---
   { id: 'b1', name: 'Chegou Agora', icon: '👶', description: 'Acabou de brotar. Fica esperto pra não virar saudade.', category: 'Geral' },
   { id: 'b9', name: 'Sobrevivente', icon: '💀', description: 'Jogou a primeira sem vomitar nem apanhar.', category: 'Geral' },
@@ -14,7 +23,6 @@ export const ALL_BADGES: Badge[] = [
   { id: 'b8', name: 'Chorão', icon: '😭', description: 'Reclama de tudo. Acha que tá na Champions, seu lixo?', category: 'Geral' },
   { id: 'sp_unique_brow', name: 'Brow Único', icon: '/badges/no-monkey.png', description: 'Macacos são proibidos na pelada, mas o brow é UNICO!', category: 'Elite' },
   { id: 'mk1', name: 'Mesmo proibido ele esta presente na pelada', icon: '/badges/no-monkey.png', description: 'Ele viu tudo, mas não vai falar nada. O infiltrado do bueiro.', category: 'Elite' },
-  { id: 'dev1', name: 'Mago do Código', icon: '🧙‍♂️', description: 'O mago que fez essa porra toda, o magico da programação', category: 'Architect' },
 
   // --- PRESENÇA & FIDELIDADE ---
   { id: 'pres1', name: 'Calouro do Bueiro', icon: '👶', description: 'Veio na primeira pelada. Não morreu ainda.', category: 'Geral' },
@@ -245,6 +253,170 @@ export const ALL_BADGES: Badge[] = [
   { id: 'vb3', name: 'Cavaleiro das Trevas', icon: '🦇', description: 'Joga melhor sob pressão e xingamentos.', category: 'Architect' },
   { id: 'st1', name: 'Gol de Placa', icon: '🏙️', description: 'Fez um gol que merecia placa no bueiro.', category: 'Linha' },
   { id: 'st2', name: 'Defesa do Século', icon: '🧤', description: 'Pegou uma bola que já tava dentro.', category: 'Goleiro' },
+
+  // --- LEGADO & AUTORIDADE (TOP TIER) ---
+  { id: 'leg1', name: 'Fundador da Pelada', icon: '👑', description: 'O patriarca que começou tudo isso aqui. Respeite o ancião.', category: 'Elite' },
+  { id: 'leg2', name: 'Administrador da Biqueira', icon: '👮‍♂️', description: 'Quem manda nessa porra. A palavra final é dele.', category: 'Elite' },
+  { id: 'leg3', name: 'Bola de Ouro Suprema', icon: '🥇', description: 'O ápice da excelência técnica e moral. O melhor dos melhores.', category: 'Elite' },
+  { id: 'leg4', name: 'Sócio Vitalício', icon: '🎟️', description: 'Parte inseparável da história desse bueiro.', category: 'Elite' },
+  { id: 'leg5', name: 'Embaixador da Várzea', icon: '🌍', description: 'Leva o nome do FDP por onde passa.', category: 'Elite' },
+
+  // --- MAGIA & TÉCNICA (GOOD BADGES) ---
+  { id: 'mg1', name: 'Rabiscador', icon: '🖌️', description: 'Desenha a jogada no chão. Arte pura.', category: 'Linha' },
+  { id: 'mg2', name: 'Driblador Nato', icon: '🐍', description: 'A bola parece uma extensão do corpo dele.', category: 'Linha' },
+  { id: 'mg3', name: 'Maestro', icon: '🎼', description: 'O cérebro do time. Rege o jogo com calma e visão.', category: 'Linha' },
+  { id: 'mg4', name: 'Goleiro-Linha Decisivo', icon: '🧤⚽', description: 'Saiu do gol pra decidir no ataque. Fenômeno.', category: 'Goleiro' },
+  { id: 'mg5', name: 'Pé de Veludo', icon: '🩰', description: 'Domínio impecável. A bola dorme no pé.', category: 'Linha' },
+  { id: 'mg6', name: 'Visão de Águia', icon: '🦅', description: 'Enxerga o passe em profundidade antes de todo mundo.', category: 'Linha' },
+  { id: 'mg7', name: 'Estrategista', icon: '♟️', description: 'Sabe se posicionar e ditar o ritmo da partida.', category: 'Linha' },
+  { id: 'mg8', name: 'Garçom com Estrela', icon: '⭐', description: 'Assistências que valem mais que gols.', category: 'Linha' },
+  { id: 'mg9', name: 'Elástico de Ouro', icon: '🪀', description: 'Mestre do drible do Ronaldinho.', category: 'Linha' },
+  { id: 'mg10', name: 'Finta Mortal', icon: '💀', description: 'Desloca o marcador sem nem encostar na bola.', category: 'Linha' },
+
+  // --- RAÇA & LUTA ---
+  { id: 'rc1', name: 'Coração de Leão', icon: '🦁', description: 'Não desiste de nenhuma bola, até a última gota de suor.', category: 'Geral' },
+  { id: 'rc2', name: 'Pulmão de Aço', icon: '🌬️', description: 'Corre o jogo todo sem pedir substituição.', category: 'Geral' },
+  { id: 'rc3', name: 'Carrasco do Meio-Campo', icon: '⚓', description: 'Domina o setor central com força e autoridade.', category: 'Linha' },
+  { id: 'rc4', name: 'Zagueiro Imortal', icon: '🛡️', description: 'Leva bolada, leva pancada e continua de pé.', category: 'Linha' },
+  { id: 'rc5', name: 'Guerreiro Vantablack', icon: '🌑', description: 'Sua presença intimida o adversário pela raça.', category: 'Elite' },
+  { id: 'rc6', name: 'Inimigo da Derrota', icon: '😤', description: 'Joga com sangue nos olhos até o apito final.', category: 'Geral' },
+  { id: 'rc7', name: 'Escudo Humano', icon: '🧱', description: 'Se joga na frente dos chutes pra salvar o goleiro.', category: 'Linha' },
+  { id: 'rc8', name: 'Motorista do Meio', icon: '⚙️', description: 'Faz o time andar. A engrenagem perfeita.', category: 'Linha' },
+  { id: 'rc9', name: 'Tanque de Guerra', icon: '🚜', description: 'Ninguém tira ele no ombro. Inabalável.', category: 'Linha' },
+  { id: 'rc10', name: 'Interceptador X', icon: '📡', description: 'Lê as linhas de passe e corta tudo.', category: 'Linha' },
+
+  // --- DEFINIÇÃO & GOL ---
+  { id: 'gl1a', name: 'Finalizador de Elite', icon: '🎯', description: 'Chute seco, rasteiro e no canto. Indefensável.', category: 'Linha' },
+  { id: 'gl1b', name: 'Sniper da Várzea', icon: '🏹', description: 'Coloca a bola no ângulo com precisão suíça.', category: 'Linha' },
+  { id: 'gl1c', name: 'Carrasco de Goleiros', icon: '🩸', description: 'O pesadelo número 1 de quem veste luvas.', category: 'Linha' },
+  { id: 'gl1d', name: 'Artilheiro Iluminado', icon: '✨', description: 'Sempre no lugar certo pra empurrar pro fundo da rede.', category: 'Linha' },
+  { id: 'gl1e', name: 'Bicicleta Perfeita', icon: '🚲', description: 'Acertou o movimento lendário com perfeição.', category: 'Linha' },
+  { id: 'gl1f', name: 'Mestre do Sem-Pulo', icon: '👟', description: 'Pega de primeira e fura a rede.', category: 'Linha' },
+  { id: 'gl1g', name: 'Cabeceador de Ouro', icon: '📀', description: 'Imbatível no jogo aéreo ofensivo.', category: 'Linha' },
+  { id: 'gl1h', name: 'Rei do Rebote', icon: '🦊', description: 'Oportunista nato. Não perdoa erro da defesa.', category: 'Linha' },
+  { id: 'gl1i', name: 'Canhão da Biqueira', icon: '💥', description: 'Chute potente que assusta até o juiz.', category: 'Linha' },
+  { id: 'gl1j', name: 'Matador Frio', icon: '🧊', description: 'Na cara do gol, ele nunca treme.', category: 'Linha' },
+
+  // --- LIDERANÇA & SOCIAL ---
+  { id: 'ld1', name: 'Capitão de Alma', icon: '👨‍✈️', description: 'Lidera pelo exemplo e pela voz positiva.', category: 'Elite' },
+  { id: 'ld2', name: 'Espírito de Grupo', icon: '🤝', description: 'Sempre coloca o time acima de si mesmo.', category: 'Geral' },
+  { id: 'ld3', name: 'Fair Play de Elite', icon: '🕊️', description: 'Joga duro, mas com uma honestidade exemplar.', category: 'Geral' },
+  { id: 'ld4', name: 'Motivador Nato', icon: '🔥', description: 'Levanta o moral do time quando as coisas estão ruins.', category: 'Geral' },
+  { id: 'ld5', name: 'Diplomata do Bueiro', icon: '🤝', description: 'Resolve tretas e mantém a paz na resenha.', category: 'Geral' },
+
+  // --- HABILIDADES ESPECÍFICAS ---
+  { id: 'sk1', name: 'Pivô Inteligente', icon: '🏗️', description: 'Usa o corpo pra criar espaços pros companheiros.', category: 'Linha' },
+  { id: 'sk2', name: 'Passador Milimétrico', icon: '📏', description: 'Passes de 30 metros que caem no pé.', category: 'Linha' },
+  { id: 'sk3', name: 'Lançador de Elite', icon: '🛰️', description: 'Inicia o contra-ataque com precisão de mísseis.', category: 'Linha' },
+  { id: 'sk4', name: 'Dono da Latera', icon: '🏃‍♂️💨', description: 'Domina o corredor lateral com velocidade e técnica.', category: 'Linha' },
+  { id: 'sk5', name: 'Mestre da Cobertura', icon: '☂️', description: 'Sempre salvando o erro do companheiro na defesa.', category: 'Linha' },
+  { id: 'sk6', name: 'Goleiro Elástico', icon: '🤸', description: 'Defesas plásticas que fazem a galera aplaudir.', category: 'Goleiro' },
+  { id: 'sk7', name: 'Muralha Mental', icon: '🧠', description: 'Não se abala com pressão nem com torcida contra.', category: 'Geral' },
+  { id: 'sk8', name: 'Rei da Antecipação', icon: '🔮', description: 'Parece prever onde a bola vai estar.', category: 'Linha' },
+  { id: 'sk9', name: 'Dono do Escanteio', icon: '🚩', description: 'Cobranças venenosas que resultam em gol.', category: 'Linha' },
+  { id: 'sk10', name: 'Meia de Ligação', icon: '🔗', description: 'A ponte perfeita entre a defesa e o ataque.', category: 'Linha' },
+
+  // --- CONQUISTAS DE ÉPOCA ---
+  { id: 'ep1', name: 'Invicto do Mês', icon: '🛡️', description: 'Nenhuma derrota registrada em 30 dias.', category: 'Elite' },
+  { id: 'ep2', name: 'Campeão da Rodada', icon: '🏆', description: 'Destaque absoluto em uma pelada específica.', category: 'Elite' },
+  { id: 'ep3', name: 'MVP do Trimestre', icon: '⭐', description: 'Consistência máxima durante 3 meses.', category: 'Elite' },
+  { id: 'ep4', name: 'Hattrick Heróico', icon: '⚽⚽⚽', description: '3 gols em um jogo onde o time estava perdendo.', category: 'Linha' },
+  { id: 'ep5', name: 'Virada Épica', icon: '🔄', description: 'Liderou o time em uma virada histórica.', category: 'Geral' },
+
+  // --- ATRIBUTOS VANTABLACK ---
+  { id: 'vb4', name: 'Sombra Silenciosa', icon: '👤', description: 'Ninguém nota, mas ele decidiu o jogo nos detalhes.', category: 'Architect' },
+  { id: 'vb5', name: 'Terror dos Bagres', icon: '😱', description: 'Sua presença faz o adversário errar o domínio.', category: 'Architect' },
+  { id: 'vb6', name: 'Elegância Noir', icon: '🕺', description: 'Joga um futebol bonito e minimalista.', category: 'Architect' },
+  { id: 'vb7', name: 'Arquiteto do Jogo', icon: '📐', description: 'Desenha a vitória passo a passo.', category: 'Architect' },
+
+  // --- BADGES DE IMPACTO ---
+  { id: 'im1', name: 'Substituto de Ouro', icon: '♻️', description: 'Entrou no segundo tempo e mudou o jogo.', category: 'Geral' },
+  { id: 'im2', name: 'Coringa do Bueiro', icon: '🃏', description: 'Joga bem em qualquer posição que o ADM colocar.', category: 'Geral' },
+  { id: 'im3', name: 'Inimigo do Empate', icon: '🚫🤝', description: 'Sempre busca a vitória, custe o que custar.', category: 'Geral' },
+  { id: 'im4', name: 'Garra de Diamante', icon: '💎', description: 'Mesmo cansado, sua técnica não cai.', category: 'Elite' },
+  { id: 'im5', name: 'Clarão na Escuridão', icon: '💡', description: 'Num jogo ruim, ele foi o ponto de luz técnica.', category: 'Elite' },
+
+  // --- TACTICAL MASTERY ---
+  { id: 'ta1', name: 'Professor da Zaga', icon: '🎓', description: 'Dá aula de como marcar sem fazer falta.', category: 'Linha' },
+  { id: 'ta2', name: 'Cão de Guarda', icon: '🐕', description: 'Não larga o pé do melhor jogador deles.', category: 'Linha' },
+  { id: 'ta3', name: 'Postura de Craque', icon: '🕴️', description: 'Joga de cabeça erguida, com classe total.', category: 'Elite' },
+  { id: 'ta4', name: 'Mestre da Transição', icon: '⚡', description: 'Transforma defesa em ataque num piscar de olhos.', category: 'Linha' },
+  { id: 'ta5', name: 'Bloqueio Mental', icon: '🧱', description: 'Anulou o principal articulador adversário.', category: 'Linha' },
+
+  // --- MAGICAL TOUCH ---
+  { id: 'mgg11', name: 'Caneta de Vidro', icon: '🪄', description: 'Caneta tão fina que o cara nem sentiu.', category: 'Linha' },
+  { id: 'mgg12', name: 'Chapéu Amestrado', icon: '🐦', description: 'A bola parece que obedece a mente dele.', category: 'Linha' },
+  { id: 'mgg13', name: 'Passe de Letra', icon: '🤴', description: 'Elegância máxima na hora de servir.', category: 'Linha' },
+  { id: 'mgg14', name: 'Gol de Calcanhar', icon: '👣', description: 'Finalização inesperada e genial.', category: 'Linha' },
+  { id: 'mgg15', name: 'Domínio Negativo', icon: '📉', description: 'Mata a bola e o momentum do adversário ao mesmo tempo.', category: 'Linha' },
+
+  // --- PROGRESSIVE POSITIVE ---
+  { id: 'ppp1', name: 'Promessa da Base', icon: '🌱', description: 'Mostrando evolução clara a cada pelada.', category: 'Geral' },
+  { id: 'ppp2', name: 'Revelação do Ano', icon: '🌟', description: 'Chegou agora e já é indispensável.', category: 'Elite' },
+  { id: 'ppp3', name: 'Consistência Pura', icon: '📈', description: 'Mantém o nível alto por 10 jogos consecutivos.', category: 'Elite' },
+  { id: 'ppp4', name: 'Pilar do Time', icon: '🏛️', description: 'A base onde a vitória é construída.', category: 'Geral' },
+  { id: 'ppp5', name: 'Lendário no Bueiro', icon: '🔥', description: 'Seu nome será lembrado por gerações de pernas de pau.', category: 'Elite' },
+
+  // --- SOCIAL & RESENHA POSITIVA ---
+  { id: 'spp1', name: 'Cervejeiro de Honra', icon: '🍻', description: 'Traz a gelada e a alegria pro pós-jogo.', category: 'Geral' },
+  { id: 'spp2', name: 'Alma da Biqueira', icon: '🎭', description: 'Essencial pra resenha ser boa.', category: 'Geral' },
+  { id: 'spp3', name: 'Conselheiro da Várzea', icon: '👴', description: 'Sempre tem uma palavra sobre o jogo e a vida.', category: 'Geral' },
+  { id: 'spp4', name: 'Fotógrafo Oficial', icon: '📸', description: 'Garante que os feitos sejam registrados.', category: 'Geral' },
+  { id: 'spp5', name: 'Rei do Churrasco Especial', icon: '🔥🥩', description: 'Garante a proteína da nossa sobrevivência.', category: 'Geral' },
+
+  // --- REFORÇO EXTRA PARA CHEGAR A 100+ ---
+  { id: 'exx1', name: 'Gatuno de Bolas', icon: '🥷', description: 'Rouba a bola e some nas sombras.', category: 'Linha' },
+  { id: 'exx2', name: 'Zagueiro Artilheiro Supremo', icon: '🛡️⚽', description: 'Lá atrás ele resolve, lá na frente ele decide.', category: 'Linha' },
+  { id: 'exx3', name: 'Muralha de Vantablack III', icon: '🧱', description: 'Reforço defensivo imparável.', category: 'Linha' },
+  { id: 'exx4', name: 'Articulador de Elite', icon: '👨‍🦲', description: 'Controla o jogo como se fosse videogame.', category: 'Linha' },
+  { id: 'exx5', name: 'Sprint Imortal', icon: '🏃‍♂️💨', description: 'Velocidade máxima mesmo aos 90 min.', category: 'Linha' },
+  { id: 'exx6', name: 'Pé de Ferro de Ouro', icon: '👞✨', description: 'Ganha todas as divididas.', category: 'Linha' },
+  { id: 'exx7', name: 'Cão de Guarda de Elite', icon: '🚔', description: 'O vigilante supremo da zaga.', category: 'Linha' },
+  { id: 'exx8', name: 'Matador Silencioso de Ouro', icon: '🤫', description: 'Não fala nada, mas faz 5 gols.', category: 'Linha' },
+  { id: 'exx9', name: 'Ala Moderno Supersônico', icon: '✈️', description: 'Faz o vaivém com perfeição tática.', category: 'Linha' },
+  { id: 'exx10', name: 'Lenda Urbana Infinita', icon: '🏙️', description: 'Aruína dos adversários, glória dos aliados.', category: 'Elite' },
+  { id: 'exx11', name: 'Finta de Corpo Genial', icon: '🕺', description: 'Dribla sem tocar na bola.', category: 'Linha' },
+  { id: 'exx12', name: 'Controle de Grupo Supremo', icon: '📣', description: 'Sabe acalmar os ânimos exaltados.', category: 'Geral' },
+  { id: 'exx13', name: 'Passe de Trivela Magistral', icon: '🌀', description: 'Estilo Quaresma no bueiro.', category: 'Linha' },
+  { id: 'exx14', name: 'Amigo do ADM de Luxo', icon: '🍹', description: 'Tem privilégios reais na biqueira.', category: 'Geral' },
+  { id: 'exx15', name: 'Infiltrado de Elite Invisível', icon: '👻', description: 'Sempre aparece livre na área.', category: 'Linha' },
+  { id: 'exx16', name: 'Goleiro Líbero de Ouro', icon: '🏃‍♂️🧤', description: 'Joga com os pés melhor que muito atacante.', category: 'Goleiro' },
+  { id: 'exx17', name: 'Resiliência Imortal', icon: '🧘‍♀️', description: 'Errou o gol mas fez o próximo decisivo.', category: 'Geral' },
+  { id: 'exx18', name: 'Visão de Jogo Infinita', icon: '🔄', description: 'Sabe onde todos estão em campo.', category: 'Linha' },
+  { id: 'exx19', name: 'Cavalheiro de Honra', icon: '🎩✨', description: 'Educado até pra dar o rapa.', category: 'Geral' },
+  { id: 'exx20', name: 'Símbolo da Pelada Eterno', icon: '🏷️', description: 'A cara oficial do nosso grupo.', category: 'Elite' },
+  { id: 'exx21', name: 'Mestre do drible da vaca Supremo', icon: '🐄💨', description: 'Finta o adversário e busca do outro lado.', category: 'Linha' },
+  { id: 'exx22', name: 'Goleiro de Handebol v3', icon: '🤾‍♂️🔥', description: 'Defesa com os pés digna de olimpíadas.', category: 'Goleiro' },
+  { id: 'exx23', name: 'Cruzamento de Ouro Puro', icon: '🥐✨', description: 'Bola na medida pro atacante guardar.', category: 'Linha' },
+  { id: 'exx24', name: 'Desarmador de Elite Relâmpago', icon: '🛠️⚡', description: 'Desmontou o ataque adversário sozinho.', category: 'Linha' },
+  { id: 'exx25', name: 'Cérebro do Time Vantablack', icon: '🧠🌑', description: 'Pensa o jogo 3 jogadas à frente.', category: 'Linha' },
+  { id: 'exx26', name: 'Garra do Bueiro', icon: '🥊', description: 'Luta por cada centímetro de campo.', category: 'Geral' },
+  { id: 'exx27', name: 'Finalização de Placa', icon: '🏙️', description: 'Cada chute é uma pintura.', category: 'Linha' },
+  { id: 'exx28', name: 'Maestro do Meio-Campo', icon: '🧶', description: 'Tece o jogo com fios de ouro.', category: 'Linha' },
+  { id: 'exx29', name: 'Inimigo do Bagre', icon: '👿', description: 'Sua qualidade técnica anula a ruindade alheia.', category: 'Linha' },
+  { id: 'exx30', name: 'Patrimônio da Noite', icon: '🌙', description: 'O rei das peladas noturnas.', category: 'Elite' },
+
+  // --- EXTRA EXPERIENCE UNIVERSE ---
+  { id: 'gx1', name: 'Dono do Meio', icon: '🕹️', description: 'Controla a meiuca com sabedoria.', category: 'Linha' },
+  { id: 'gx2', name: 'Marcação de Ouro', icon: '🛡️', description: 'Não deixa o craque deles respirar.', category: 'Linha' },
+  { id: 'gx3', name: 'Pivô de Vidro', icon: '🏗️', description: 'Faz a parede e serve com açúcar.', category: 'Linha' },
+  { id: 'gx4', name: 'Ala de Ferro', icon: '🏃‍♂️', description: 'Cobre o corredor com raça absoluta.', category: 'Linha' },
+  { id: 'gx5', name: 'Artilheiro do Povo', icon: '🏟️', description: 'Sempre faz o gol da vitória da galera.', category: 'Linha' },
+  { id: 'gx6', name: 'Guerreador do Bueiro', icon: '🛡️', description: 'Não tem medo de cara feia nem dividida.', category: 'Geral' },
+  { id: 'gx7', name: 'Passador de Elite', icon: '📏', description: 'Acha o companheiro livre até no escuro.', category: 'Linha' },
+  { id: 'gx8', name: 'Mestre da Retomada', icon: '🔄', description: 'Perde a bola e recupera no mesmo segundo.', category: 'Linha' },
+  { id: 'gx9', name: 'Lumina da Biqueira', icon: '✨', description: 'Sua sorte contagia o time inteiro.', category: 'Elite' },
+  { id: 'gx10', name: 'Inabalável', icon: '🗿', description: 'Pode estar perdendo de 10, ele continua jogando sério.', category: 'Geral' },
+  { id: 'gx11', name: 'Visão Futurista', icon: '🔮', description: 'Sabe onde a bola vai sobrar antes dela espirrar.', category: 'Linha' },
+  { id: 'gx12', name: 'Espírito Inquebrável', icon: '🎗️', description: 'Liderança positiva em momentos críticos.', category: 'Geral' },
+  { id: 'gx13', name: 'Mãos de Ouro (Goleiro)', icon: '🧤✨', description: 'Pega até pensamento.', category: 'Goleiro' },
+  { id: 'gx14', name: 'Salto Ornamental', icon: '🤸‍♂️', description: 'Defesa de cinema que salvou o resultado.', category: 'Goleiro' },
+  { id: 'gx15', name: 'Comandante da Zaga', icon: '🗣️🛡️', description: 'Organiza a defesa com autoridade.', category: 'Linha' },
+  { id: 'gx16', name: 'Coringa Decisivo', icon: '🃏', description: 'Aparece em qualquer lugar pra matar o jogo.', category: 'Linha' },
+  { id: 'gx17', name: 'Sombra Imparável', icon: '👤', description: 'Ninguém marca ele, pois ninguém o vê chegando.', category: 'Linha' },
+  { id: 'gx18', name: 'Pé de Anjo', icon: '👼', description: 'Finalizações com uma curva impossível.', category: 'Linha' },
+  { id: 'gx19', name: 'Escultor de Jogadas', icon: '🔨', description: 'Constrói a vitória com paciência.', category: 'Linha' },
+  { id: 'gx20', name: 'Relíquia do FDP', icon: '🏺', description: 'Um jogador raro, técnico e leal.', category: 'Elite' },
 
   // --- EXTRA GENERATION (PARA GARANTIR 300+) ---
   ...Array.from({ length: 140 }).map((_, i) => ({

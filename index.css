@@ -3,23 +3,34 @@
 @tailwind utilities;
 
 :root {
-  --vantablack: #050505;
-  --noir-dark: #0a0a0a;
+  --vantablack: #020202;
+  --noir-dark: #070707;
   --pitch-green: #064e3b;
-  --blood-red: #991b1b;
+  --blood-red: #c53030;
+  --glass: rgba(10, 10, 10, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.05);
 }
 
 body {
   background-color: var(--vantablack);
-  color: #d1d5db;
+  color: #e2e8f0;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Typography Overrides */
+h1,
+h2,
+h3,
+.font-oswald {
+  letter-spacing: -0.05em;
 }
 
 /* Custom Scrollbar - Vantablack Style */
 ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -27,31 +38,47 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #333;
-  border-radius: 0px;
+  background: #1a1a1a;
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--blood-red);
 }
 
-/* Animations */
+/* Animations & Transitions */
 @keyframes neon-pulse {
 
   0%,
   100% {
     opacity: 1;
-    text-shadow: 0 0 10px rgba(220, 38, 38, 0.5);
+    filter: drop-shadow(0 0 5px rgba(197, 48, 48, 0.5));
   }
 
   50% {
     opacity: 0.8;
-    text-shadow: 0 0 20px rgba(220, 38, 38, 0.8);
+    filter: drop-shadow(0 0 15px rgba(197, 48, 48, 0.8));
   }
 }
 
 .animate-neon {
-  animation: neon-pulse 2s infinite ease-in-out;
+  animation: neon-pulse 3s infinite ease-in-out;
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes glitch {
@@ -60,19 +87,19 @@ body {
   }
 
   20% {
-    transform: translate(-2px, 2px);
+    transform: translate(-1px, 1px);
   }
 
   40% {
-    transform: translate(-2px, -2px);
+    transform: translate(-1px, -1px);
   }
 
   60% {
-    transform: translate(2px, 2px);
+    transform: translate(1px, 1px);
   }
 
   80% {
-    transform: translate(2px, -2px);
+    transform: translate(1px, -1px);
   }
 
   100% {
@@ -81,7 +108,7 @@ body {
 }
 
 .hover-glitch:hover {
-  animation: glitch 0.3s infinite linear;
+  animation: glitch 0.2s infinite linear;
 }
 
 /* Utility to hide scrollbar but keep functionality */
@@ -94,15 +121,27 @@ body {
   scrollbar-width: none;
 }
 
-/* Vantablack Cards */
+/* Vantablack Cards & Glassmorphism */
+.glass-panel {
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+}
+
 .vantablack-card {
-  background: linear-gradient(145deg, #0a0a0a, #050505);
-  border: 1px solid #1a1a1a;
-  box-shadow: 10px 10px 20px #030303, -10px -10px 20px #080808;
+  background: linear-gradient(145deg, #0a0a0a, #020202);
+  border: 1px solid #141414;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.premium-border {
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.01);
 }
 
 .text-stroke-red {
-  -webkit-text-stroke: 1px #991b1b;
+  -webkit-text-stroke: 1px var(--blood-red);
   color: transparent;
 }
 
@@ -113,15 +152,15 @@ body {
   }
 
   25% {
-    transform: translateY(-4px) rotate(1deg);
+    transform: translateY(-3px) rotate(0.5deg);
   }
 
   50% {
-    transform: translateY(-2px) rotate(-1deg);
+    transform: translateY(-1px) rotate(-0.5deg);
   }
 
   75% {
-    transform: translateY(-5px) rotate(0.5deg);
+    transform: translateY(-4px) rotate(0.2deg);
   }
 
   100% {
@@ -133,13 +172,13 @@ body {
 
   0%,
   100% {
-    box-shadow: 0 0 15px rgba(168, 85, 247, 0.4), inset 0 0 10px rgba(168, 85, 247, 0.2);
-    border-color: rgba(168, 85, 247, 0.4);
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.3), inset 0 0 5px rgba(168, 85, 247, 0.15);
+    border-color: rgba(168, 85, 247, 0.3);
   }
 
   50% {
-    box-shadow: 0 0 40px rgba(168, 85, 247, 0.7), inset 0 0 20px rgba(192, 132, 252, 0.4);
-    border-color: rgba(192, 132, 252, 0.8);
+    box-shadow: 0 0 30px rgba(168, 85, 247, 0.6), inset 0 0 15px rgba(192, 132, 252, 0.3);
+    border-color: rgba(192, 132, 252, 0.7);
   }
 }
 
@@ -149,7 +188,7 @@ body {
   }
 
   50% {
-    filter: hue-rotate(45deg) brightness(1.2);
+    filter: hue-rotate(30deg) brightness(1.1);
   }
 
   100% {
@@ -167,4 +206,13 @@ body {
 
 .animate-nebula {
   animation: nebula-shift 8s ease-in-out infinite;
+}
+
+/* Page Container Utilities */
+.page-container {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+.section-title {
+  @apply font-oswald text-2xl font-black uppercase italic tracking-tighter;
 }

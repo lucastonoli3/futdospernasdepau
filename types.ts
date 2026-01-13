@@ -26,6 +26,9 @@ export interface HeritageItem {
   photo: string;
   date: string;
   type: 'album' | 'trophy';
+  tagged_players?: string[]; // IDs
+  likes_count?: number;
+  comments_count?: number;
 }
 
 export interface SpecialEvent {
@@ -65,7 +68,7 @@ export interface Player {
 
 export interface MatchSession {
   id: string;
-  status: 'vago' | 'votacao_aberta' | 'em_jogo' | 'finalizado';
+  status: 'resenha' | 'partida' | 'vago' | 'votacao_aberta' | 'em_jogo' | 'finalizado';
   votingOpen: boolean;
   playersPresent: string[];
   matchDay?: number;

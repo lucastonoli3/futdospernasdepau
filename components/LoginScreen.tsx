@@ -193,7 +193,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
         assists: 0,
         best_votes: 0,
         worst_votes: 0,
-        moral_score: isTonoli ? 100 : 50,
+        moral_score: 100,
         status: PlayerStatus.NORMAL,
         badges: JSON.stringify(isTonoli ? ['b1', 'f1'] : ['b1'])
       };
