@@ -189,7 +189,7 @@ const PostMatchVoting: React.FC<PostMatchVotingProps> = ({ players, currentUser,
         </div>
     );
 
-    const bestPlayersList = players.filter(p => p.id !== currentUser.id);
+    const bestPlayersList = players;
 
     return (
         <div className="max-w-4xl mx-auto space-y-12 animate-in fade-in duration-700">
