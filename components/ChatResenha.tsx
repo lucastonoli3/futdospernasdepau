@@ -21,6 +21,9 @@ const ChatResenha: React.FC<ChatResenhaProps> = ({ currentUser, allPlayers }) =>
   const [input, setInput] = useState('');
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [showReportForm, setShowReportForm] = useState(false);
+  const [featType, setFeatType] = useState('caneta');
+  const [victimId, setVictimId] = useState('');
+  const [featDescription, setFeatDescription] = useState('');
   const [confirmedFeats, setConfirmedFeats] = useState<any[]>([]);
 
   // Estados para Menções (@)
@@ -112,6 +115,29 @@ const ChatResenha: React.FC<ChatResenhaProps> = ({ currentUser, allPlayers }) =>
     } catch (e) { alert("Erro ao confirmar."); }
   };
 
+  const handleSubmitFeat = async () => {
+    if (!victimId || !featDescription) return;
+
+    try {
+      const { error } = await supabase.from('humiliations').insert([{
+        performer_id: currentUser.id,
+        victim_id: victimId,
+        type: featType,
+        description: featDescription,
+        status: 'pending'
+      }]);
+
+      if (error) throw error;
+
+      alert("FEITO REPORTADO! Agora aguarde a revisão do Admin para a moral subir.");
+      setShowReportForm(false);
+      setVictimId('');
+      setFeatDescription('');
+    } catch (e) {
+      alert("Erro ao reportar.");
+    }
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const position = e.target.selectionStart || 0;
@@ -121,7 +147,6 @@ const ChatResenha: React.FC<ChatResenhaProps> = ({ currentUser, allPlayers }) =>
     const textBeforeCursor = value.substring(0, position);
     const lastAt = textBeforeCursor.lastIndexOf('@');
 
-    // Verifica se o @ está no início ou depois de um espaço
     if (lastAt !== -1 && (lastAt === 0 || textBeforeCursor[lastAt - 1] === ' ')) {
       const query = textBeforeCursor.substring(lastAt + 1);
       if (!query.includes(' ')) {
@@ -167,7 +192,6 @@ const ChatResenha: React.FC<ChatResenhaProps> = ({ currentUser, allPlayers }) =>
     return "#" + "00000".substring(0, 6 - c.length) + c;
   };
 
-  // Timeline unificada
   const timeline = [
     ...persistentMessages.map(m => ({ ...m, type: 'CHAT' })),
     ...confirmedFeats.map(f => ({
@@ -200,6 +224,12 @@ const ChatResenha: React.FC<ChatResenhaProps> = ({ currentUser, allPlayers }) =>
           </div>
         </div>
         <div className="flex gap-4">
+          <button
+            onClick={() => setShowReportForm(!showReportForm)}
+            className="px-4 py-2 text-[10px] uppercase font-black tracking-widest border border-red-900 bg-red-700/20 text-red-500 hover:bg-red-700 hover:text-white transition-all italic"
+          >
+            {showReportForm ? 'Cancelar' : 'Relatar Feito'}
+          </button>
           {isLastMondayOfMonth() && (
             <button
               onClick={handleConfirmChurras}
@@ -211,6 +241,57 @@ const ChatResenha: React.FC<ChatResenhaProps> = ({ currentUser, allPlayers }) =>
           )}
         </div>
       </div>
+
+      {/* Form de Relatar Feito */}
+      {showReportForm && (
+        <div className="bg-neutral-900 border-b border-red-900/30 p-6 space-y-4 animate-in slide-in-from-top duration-300 z-20">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-[9px] text-neutral-500 uppercase font-black block mb-1">O que você fez?</label>
+              <select
+                value={featType}
+                onChange={(e) => setFeatType(e.target.value)}
+                className="w-full bg-black border border-neutral-800 p-2 text-white font-oswald text-xs uppercase outline-none focus:border-red-700"
+              >
+                <option value="caneta">Dê uma Caneta</option>
+                <option value="chapeu">Dê um Chapéu</option>
+                <option value="dibre">Dibre Humilhante</option>
+                <option value="gol_placa">Gol de Placa</option>
+                <option value="vexame">Vi um Vexame</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-[9px] text-neutral-500 uppercase font-black block mb-1">Vítima (Quem tomou?)</label>
+              <select
+                value={victimId}
+                onChange={(e) => setVictimId(e.target.value)}
+                className="w-full bg-black border border-neutral-800 p-2 text-white font-oswald text-xs uppercase outline-none focus:border-red-700"
+              >
+                <option value="">Escolha a vítima...</option>
+                {allPlayers.filter(p => p.id !== currentUser.id).map(p => (
+                  <option key={p.id} value={p.id}>{p.nickname}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="text-[9px] text-neutral-500 uppercase font-black block mb-1">Detalhes do Crime</label>
+            <textarea
+              value={featDescription}
+              onChange={(e) => setFeatDescription(e.target.value)}
+              placeholder="Descreva a humilhação..."
+              className="w-full bg-black border border-neutral-800 p-2 text-white font-mono text-[10px] outline-none focus:border-red-700 h-20 resize-none"
+            />
+          </div>
+          <button
+            onClick={handleSubmitFeat}
+            disabled={!victimId || !featDescription}
+            className="w-full bg-white text-black py-3 font-oswald font-black uppercase text-xs hover:bg-red-700 hover:text-white transition-all disabled:opacity-20"
+          >
+            Protocolar Feito para Revisão
+          </button>
+        </div>
+      )}
 
       {/* Feed da História */}
       <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-neutral-900/20 via-black to-black no-scrollbar">
