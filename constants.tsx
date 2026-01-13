@@ -82,10 +82,22 @@ export const ALL_BADGES: Badge[] = [
   { id: 'bh14', name: 'Motorista do Time', icon: '🚗', description: 'Traz 4 marmanjos no carro toda semana.', category: 'Geral' },
   { id: 'bh15', name: 'Almoxarife', icon: '🎒', description: 'Sempre traz a bomba e o colete pro jogo.', category: 'Geral' },
 
-  // --- HABILIDADE: ATAQUE ---
+  // --- HABILIDADE: ATAQUE (LOG DE FEITOS) ---
   { id: 'atk1', name: 'Matador de Aluguel', icon: '🎯', description: 'Tocou na bola dentro da área? É gol.', category: 'Linha' },
   { id: 'atk2', name: 'Mestre das Canetas', icon: '🖊️', description: 'O rei do bueiro. 3 canetas no mesmo jogo.', category: 'Linha' },
-  { id: 'atk3', name: 'Dono do Chapéu', icon: '👒', description: 'Só joga com a bola pelo alto.', category: 'Linha' },
+  { id: 'cn1', name: 'Caneteiro Nível 1', icon: '🖊️', description: 'Deu sua primeira caneta oficial.', category: 'Linha' },
+  { id: 'cn5', name: 'Caneteiro Nível 5', icon: '🖊️', description: 'Já distribuiu 5 canetas. Tá ficando abusado.', category: 'Linha' },
+  { id: 'cn10', name: 'Caneteiro Nível 10', icon: '💉', description: '10 canetas. Os adversários fecham a perna quando você chega.', category: 'Linha' },
+  { id: 'cn20', name: 'Caneteiro Nível 20', icon: '🪄', description: '20 canetas. Mestre da mágica entre as pernas.', category: 'Linha' },
+  { id: 'cn50', name: 'Lenda das Canetas', icon: '👑', description: '50 canetas. Você é o terror do bueiro.', category: 'Linha' },
+
+  { id: 'ch1', name: 'Dono do Chapéu', icon: '👒', description: 'Deu seu primeiro chapéu oficial.', category: 'Linha' },
+  { id: 'ch5', name: 'Chapeleiro Maluco', icon: '🎩', description: '5 chapéus distribuídos. Joga com a bola no alto.', category: 'Linha' },
+  { id: 'ch10', name: 'Mestre da Cobertura', icon: '🏠', description: '10 chapéus. Ninguém te alcança por cima.', category: 'Linha' },
+
+  { id: 'db1', name: 'Dibre Humilhante', icon: '🐍', description: 'Deixou o cara no chão e saiu rindo.', category: 'Linha' },
+  { id: 'db10', name: 'Entortador de Varal', icon: '🧺', description: '10 dribles desconcertantes confirmados.', category: 'Linha' },
+
   { id: 'atk4', name: 'Pé de Cristal', icon: '💎', description: 'Dribles finos e chutes precisos.', category: 'Linha' },
   { id: 'atk5', name: 'Artilheiro Raiz', icon: '⚽', description: 'Faz gol de canela, de orelha, de qualquer jeito.', category: 'Linha' },
   { id: 'atk6', name: 'Garçom de Luxo', icon: '🍷', description: '10 assistências em um único mês.', category: 'Linha' },
@@ -134,6 +146,8 @@ export const ALL_BADGES: Badge[] = [
   // --- HABILIDADE: GOLEIRO ---
   { id: 'gl1', name: 'Paredão de Vantablack', icon: '🖤', description: 'Pegou até pensamento hoje.', category: 'Goleiro' },
   { id: 'gl2', name: 'Mão de Alface', icon: '🥬', description: 'Aceitou um frango histórico.', category: 'Goleiro' },
+  { id: 'fr1', name: 'Frangueiro Profissional', icon: '🥚', description: 'O primeiro frango a gente nunca esquece.', category: 'Goleiro' },
+  { id: 'fr5', name: 'Granja do Bueiro', icon: '🐣', description: '5 frangos confirmados. O time já nem confia mais.', category: 'Goleiro' },
   { id: 'gl3', name: 'Goleiro Voador', icon: '🦅', description: 'Se joga em todas as bolas, até nas fora.', category: 'Goleiro' },
   { id: 'gl4', name: 'Muralha do Crime', icon: '🚧', description: 'Incontestável. Fechou o bueiro.', category: 'Goleiro' },
   { id: 'gl5', name: 'Assustador de Atacante', icon: '👹', description: 'O cara fica com medo de chutar.', category: 'Goleiro' },
@@ -150,11 +164,15 @@ export const ALL_BADGES: Badge[] = [
   { id: 'gl16', name: 'Catador de Borboleta', icon: '🦋', description: 'Saiu mal no cruzamento.', category: 'Goleiro' },
   { id: 'gl17', name: 'Muralha de Isopor', icon: '🧊', description: 'Parece forte mas desmorona no primeiro chute.', category: 'Goleiro' },
   { id: 'gl18', name: 'Santo do Bueiro', icon: '😇', description: 'Fez uma defesa milagrosa no último minuto.', category: 'Goleiro' },
-  { id: 'gl19', name: 'Atleta de Handebol', icon: '🤾', description: 'Só defende com o pé, esquece a mão.', category: 'Goleiro' },
+  { id: 'gl13', name: 'Handebol', icon: '🤾', description: 'Só defende com o pé, esquece a mão.', category: 'Goleiro' },
   { id: 'gl20', name: 'Goleiro Pipoca', icon: '🍿', description: 'Pula muito mas não pega nada.', category: 'Goleiro' },
 
-  // --- BAGRE & VERGONHA ---
+  // --- BAGRE & VERGONHA (VITIMAS) ---
   { id: 'bg1', name: 'Bagre de Platina', icon: '🐟', description: 'Atingiu um nível de ruindade sobre-humano.', category: 'Geral' },
+  { id: 'vt_cn1', name: 'Passarela de Caneta', icon: '🦵', description: 'Tomou a primeira caneta oficial. Fecha as perna!', category: 'Geral' },
+  { id: 'vt_cn5', name: 'Túnel do Metrô', icon: '🚇', description: 'Tomou 5 canetas. Já virou atração turística do bueiro.', category: 'Geral' },
+  { id: 'vt_ch1', name: 'Olhou pro Céu', icon: '🪁', description: 'Levou um chapéu e ficou procurando a bola.', category: 'Geral' },
+  { id: 'vt_db1', name: 'No Chão', icon: '📉', description: 'Foi driblado e ficou sentado no gramado.', category: 'Geral' },
   { id: 'bg2', name: 'Inimigo da Bola', icon: '🚫', description: 'A bola foge dele como se fosse o diabo.', category: 'Geral' },
   { id: 'bg3', name: 'Tijoleiro', icon: '🧱', description: 'Domina a bola e ela vai pra 2 metros.', category: 'Geral' },
   { id: 'bg4', name: 'Cego de Várzea', icon: '🕶️', description: 'Não viu o companheiro livre do lado.', category: 'Geral' },
