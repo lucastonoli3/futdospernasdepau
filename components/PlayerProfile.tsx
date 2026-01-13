@@ -75,13 +75,26 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
 
   const handlePostInteraction = async (type: 'comment' | 'insult') => {
     if (!currentUser || !selectedAlbumItem || !newComment.trim()) return;
+
     const { error } = await supabase.from('heritage_interactions').insert([{
       heritage_id: selectedAlbumItem.id,
       player_id: currentUser.id,
       type,
       content: newComment
     }]);
+
     if (!error) {
+      // Notificar o dono da postagem
+      if (selectedAlbumItem.player_id !== currentUser.id) {
+        await supabase.from('notifications').insert([{
+          player_id: selectedAlbumItem.player_id,
+          actor_id: currentUser.id,
+          type: type,
+          heritage_id: selectedAlbumItem.id,
+          content: newComment.substring(0, 50)
+        }]);
+      }
+
       setNewComment("");
       fetchInteractions(selectedAlbumItem.id);
     }
@@ -106,6 +119,16 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
         player_id: currentUser.id,
         type: 'like'
       }]);
+
+      // Notificar o dono da postagem
+      if (selectedAlbumItem.player_id !== currentUser.id) {
+        await supabase.from('notifications').insert([{
+          player_id: selectedAlbumItem.player_id,
+          actor_id: currentUser.id,
+          type: 'like',
+          heritage_id: selectedAlbumItem.id
+        }]);
+      }
     }
     fetchInteractions(selectedAlbumItem.id);
     setIsLiking(false);
@@ -271,6 +294,28 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
         }]);
 
         if (dbError) throw new Error("Erro no Banco: " + dbError.message);
+
+        // Notificar jogadores marcados
+        if (newHeritage.tagged.length > 0) {
+          const { data: newItem } = await supabase
+            .from('heritage')
+            .select('id')
+            .eq('player_id', player.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+          if (newItem) {
+            const notifs = newHeritage.tagged.map(tid => ({
+              player_id: tid,
+              actor_id: currentUser.id,
+              type: 'tag',
+              heritage_id: newItem.id,
+              content: `Te marcou numa nova memória: ${newHeritage.title}`
+            }));
+            await supabase.from('notifications').insert(notifs);
+          }
+        }
 
         setNewHeritage({ title: '', photo: '', type: 'album', tagged: [] });
         setTempFile(null);

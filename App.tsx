@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Player, MatchSession, Position, PlayerStatus, GlobalFinances, FinancialGoal } from './types';
 import LoginScreen from './components/LoginScreen';
+import NotificationCenter from './components/NotificationCenter';
 import Rankings from './components/Rankings';
 import MatchControl from './components/MatchControl';
 import ChatResenha from './components/ChatResenha';
@@ -248,6 +249,12 @@ function App() {
           </div>
         </nav>
 
+        {isLogged && currentUser && (
+          <div className="px-6 pb-4">
+            <NotificationCenter currentUser={currentUser} />
+          </div>
+        )}
+
         {isLogged && (
           <div className="p-4 border-t border-neutral-800/50 bg-neutral-900/20">
             <div className="flex items-center gap-3 p-2 rounded-xl border border-neutral-800/30 hover:bg-neutral-800/50 transition-all cursor-pointer group" onClick={() => setSelectedPlayer(currentUser)}>
@@ -269,6 +276,7 @@ function App() {
           <h1 className="font-oswald text-lg font-black uppercase italic text-red-600">FDP <span className="text-white">FUT</span></h1>
         </div>
         <div className="flex items-center gap-3">
+          {isLogged && currentUser && <NotificationCenter currentUser={currentUser} />}
           {isLogged ? (
             <img
               src={currentUser?.photo}
