@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
 import { Player } from '../types';
-import { geminiService } from '../services/geminiService';
+import { aiService } from '../services/geminiService';
+import { supabase } from '../services/supabaseClient';
 
 interface MatchControlProps {
   players: Player[];
@@ -9,7 +10,6 @@ interface MatchControlProps {
 }
 
 const MatchControl: React.FC<MatchControlProps> = ({ players, currentUser }) => {
-  const [confirmedIds, setConfirmedIds] = useState<string[]>([]);
   const [teams, setTeams] = useState<{ A: string[], B: string[], C: string[] } | null>(null);
   const [aiComment, setAiComment] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -17,19 +17,46 @@ const MatchControl: React.FC<MatchControlProps> = ({ players, currentUser }) => 
   const [score, setScore] = useState({ A: 0, B: 0 });
   const [gameEvents, setGameEvents] = useState<{ type: string, player: string, time: string }[]>([]);
 
+  // Carregar presenças da sessão do Supabase (presumindo que currentSession chegue via props em uma versão futura ou via useEffect)
+  // Mas como currentSession não está nas props agora, vou usar useEffect local para se inscrever
+  const [confirmedIds, setConfirmedIds] = useState<string[]>([]);
+
+  React.useEffect(() => {
+    fetchSessionPresences();
+    const channel = supabase
+      .channel('session_presences')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'sessions' }, payload => {
+        if (payload.new.players_present) {
+          setConfirmedIds(payload.new.players_present);
+        }
+      })
+      .subscribe();
+    return () => { channel.unsubscribe(); };
+  }, []);
+
+  const fetchSessionPresences = async () => {
+    const { data } = await supabase.from('sessions').select('players_present').eq('id', 1).single();
+    if (data?.players_present) setConfirmedIds(data.players_present);
+  };
+
   // Split confirmed IDs into Main List (first 15) and Waitlist (rest)
   const mainListIds = confirmedIds.slice(0, 15);
   const waitListIds = confirmedIds.slice(15);
 
-  const handleConfirm = (id: string) => {
-    // Security check: User can only toggle themselves
+  const handleConfirm = async (id: string) => {
     if (id !== currentUser.id) return;
 
+    let newConfirmed;
     if (confirmedIds.includes(id)) {
-      setConfirmedIds(prev => prev.filter(i => i !== id));
+      newConfirmed = confirmedIds.filter(i => i !== id);
     } else {
-      setConfirmedIds(prev => [...prev, id]);
+      newConfirmed = [...confirmedIds, id];
     }
+
+    setConfirmedIds(newConfirmed);
+
+    // Persistir no Supabase
+    await supabase.from('sessions').update({ players_present: newConfirmed }).eq('id', 1);
   };
 
   const drawTeams = async () => {
@@ -39,27 +66,45 @@ const MatchControl: React.FC<MatchControlProps> = ({ players, currentUser }) => 
     }
 
     setIsGenerating(true);
-    // Logic: shuffle main list players only
-    const shuffled = [...mainListIds].sort(() => Math.random() - 0.5);
-    const size = Math.floor(shuffled.length / 3);
 
-    // Distribute roughly evenly
-    const teamAIds = shuffled.slice(0, size);
-    const teamBIds = shuffled.slice(size, size * 2);
-    const teamCIds = shuffled.slice(size * 2); // Takes the rest
+    // Sortear os jogadores com base no moralScore para equilibrar
+    const presentPlayers = mainListIds
+      .map(id => players.find(p => p.id === id))
+      .filter((p): p is Player => !!p)
+      .sort((a, b) => (b.moralScore || 0) - (a.moralScore || 0));
 
-    const getNicknames = (ids: string[]) => ids.map(id => players.find(p => p.id === id)?.nickname || "Desconhecido");
+    const teamA: string[] = [];
+    const teamB: string[] = [];
+    const teamC: string[] = [];
+
+    // Distribuição "Serpente" para Equilíbrio Máximo
+    // 1->A, 2->B, 3->C, 4->C, 5->B, 6->A, 7->A...
+    presentPlayers.forEach((p, index) => {
+      const cycle = Math.floor(index / 3);
+      const pos = index % 3;
+      const isEvenCycle = cycle % 2 === 0;
+
+      if (isEvenCycle) {
+        if (pos === 0) teamA.push(p.nickname);
+        else if (pos === 1) teamB.push(p.nickname);
+        else teamC.push(p.nickname);
+      } else {
+        if (pos === 0) teamC.push(p.nickname);
+        else if (pos === 1) teamB.push(p.nickname);
+        else teamA.push(p.nickname);
+      }
+    });
 
     const newTeams = {
-      A: getNicknames(teamAIds),
-      B: getNicknames(teamBIds),
-      C: getNicknames(teamCIds)
+      A: teamA,
+      B: teamB,
+      C: teamC
     };
 
     setTeams(newTeams);
 
     try {
-      const comment = await geminiService.generateTeamDrawComment(newTeams.A, newTeams.B, newTeams.C);
+      const comment = await aiService.generateTeamDrawComment(newTeams.A, newTeams.B, newTeams.C);
       setAiComment(comment || "Sorteio feito.");
     } catch (e) {
       setAiComment("A IA foi fumar uma pedra e não voltou.");
@@ -163,8 +208,8 @@ const MatchControl: React.FC<MatchControlProps> = ({ players, currentUser }) => 
           <button
             onClick={() => handleConfirm(currentUser.id)}
             className={`px-6 py-3 font-oswald uppercase tracking-wider transition-all shadow-lg ${confirmedIds.includes(currentUser.id)
-                ? 'bg-red-700 hover:bg-red-600 text-white'
-                : 'bg-green-700 hover:bg-green-600 text-white'
+              ? 'bg-red-700 hover:bg-red-600 text-white'
+              : 'bg-green-700 hover:bg-green-600 text-white'
               }`}
           >
             {confirmedIds.includes(currentUser.id) ? 'Tô Fora (Arregar)' : 'Tô Dentro (Confirmar)'}

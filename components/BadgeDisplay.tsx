@@ -30,7 +30,11 @@ const BadgeDisplay: React.FC<BadgeDisplayProps> = ({ badgeId, showTitle = false 
         )}
 
         <span className={isArchitect ? 'animate-magic-float drop-shadow-[0_0_12px_rgba(255,255,255,0.9)] z-10' : ''}>
-          {badge.icon}
+          {badge.icon.startsWith('http') || badge.icon.startsWith('/') || badge.icon.startsWith('data:') ? (
+            <img src={badge.icon} alt={badge.name} className="w-8 h-8 object-contain" />
+          ) : (
+            badge.icon
+          )}
         </span>
       </div>
       {showTitle && (

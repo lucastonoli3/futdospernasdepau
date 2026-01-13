@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Player, HeritageItem } from '../types';
 import BadgeDisplay from './BadgeDisplay';
-import { geminiService } from '../services/geminiService';
+import { aiService } from '../services/geminiService';
 import { supabase } from '../services/supabaseClient';
 import imageCompression from 'browser-image-compression';
 
@@ -22,6 +22,8 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
   const [highBadges, setHighBadges] = useState<string[]>(player.high_badges || []);
   const [isSaving, setIsSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(false);
+  const [reportDescription, setReportDescription] = useState("");
+  const [showReportForm, setShowReportForm] = useState<'caneta' | 'chapeu' | 'humilhacao' | null>(null);
 
   // Estados para novas conquistas
   const [newHeritage, setNewHeritage] = useState({ title: '', photo: '', type: 'album' as 'album' | 'trophy' });
@@ -60,7 +62,10 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
     setLoadingAi(true);
     try {
       const stats = `Gols: ${player.goals}, Assistêncas: ${player.assists}, Moral: ${player.moralScore}`;
-      const dossier = await geminiService.generatePlayerDossier(player.nickname, stats, player.moralScore, "");
+      setAiAnalysis("Analisando sua ruindade...");
+      const dossier = await aiService.generatePlayerDossier(
+        player.nickname,
+        stats, player.moralScore, "");
 
       // Salvar no banco para cache
       await supabase
@@ -89,52 +94,59 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
 
   const handleSaveProfile = async () => {
     setIsSaving(true);
+
+    // Timeout de 60 segundos
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Tempo limite excedido. Verifique sua conexão.")), 60000)
+    );
+
     try {
-      let finalPhoto = player.photo;
+      const saveTask = (async () => {
+        let finalPhoto = player.photo;
 
-      // Se houver nova foto de avatar
-      if (tempFileAvatar) {
-        const fileExt = tempFileAvatar.name.split('.').pop();
-        const fileName = `avatar_${Date.now()}.${fileExt}`;
-        const filePath = `avatars/${player.id}/${fileName}`;
+        if (tempFileAvatar) {
+          const fileExt = tempFileAvatar.name.split('.').pop() || 'jpg';
+          const fileName = `avatar_${Date.now()}.${fileExt}`;
+          const filePath = `avatars/${player.id}/${fileName}`;
 
-        const { error: uploadError } = await supabase.storage
-          .from('player_assets')
-          .upload(filePath, tempFileAvatar);
+          const { error: uploadError } = await supabase.storage
+            .from('player_assets')
+            .upload(filePath, tempFileAvatar);
 
-        if (uploadError) throw uploadError;
+          if (uploadError) throw new Error("Erro no Upload: " + uploadError.message);
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('player_assets')
-          .getPublicUrl(filePath);
+          const { data: { publicUrl } } = supabase.storage
+            .from('player_assets')
+            .getPublicUrl(filePath);
 
-        finalPhoto = publicUrl;
-      }
+          finalPhoto = publicUrl;
+        }
 
-      const { error } = await supabase
-        .from('players')
-        .update({
-          thought: thought,
-          high_badges: highBadges,
-          photo: finalPhoto
-        })
-        .eq('id', player.id);
+        const { error } = await supabase
+          .from('players')
+          .update({
+            thought: thought,
+            high_badges: highBadges,
+            photo: finalPhoto
+          })
+          .eq('id', player.id);
 
-      if (error) {
-        console.error("Erro ao salvar pensamento/badges:", error);
-        alert("ERRO NO SUPABASE: " + error.message);
-      } else {
+        if (error) throw new Error("Erro no Banco: " + error.message);
+
         setIsEditing(false);
-        // Recarregar a página para atualizar o header/ranking etc se necessário
         if (finalPhoto !== player.photo) window.location.reload();
-      }
-    } catch (err) {
-      alert("Erro ao salvar perfil.");
+        return true;
+      })();
+
+      await Promise.race([saveTask, timeout]);
+      alert("Perfil atualizado!");
+    } catch (err: any) {
+      console.error("Erro no handleSaveProfile:", err);
+      alert(err.message || "Erro ao salvar perfil.");
     } finally {
       setIsSaving(false);
     }
   };
-
   const handleAddHeritage = async () => {
     if (!newHeritage.title || !tempFile) {
       alert("Dá um título e escolhe a foto, bagre!");
@@ -144,51 +156,66 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
     setIsSaving(true);
     setUploadProgress(true);
 
+    // Timeout de 60 segundos para evitar hang infinito
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Tempo limite de upload excedido (60s). Verifique sua conexão.")), 60000)
+    );
+
     try {
-      // 1. Upload para o Storage com Compressão
-      const options = {
-        maxSizeMB: 0.5,
-        maxWidthOrHeight: 1200,
-        useWebWorker: true
-      };
+      const uploadTask = (async () => {
+        console.log("Iniciando upload de heritage...", newHeritage.title);
 
-      const compressedFile = await imageCompression(tempFile, options);
-      const fileExt = tempFile.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `heritage/${player.id}/${fileName}`;
+        const options = {
+          maxSizeMB: 0.5,
+          maxWidthOrHeight: 1200,
+          useWebWorker: false
+        };
 
-      const { error: uploadError } = await supabase.storage
-        .from('player_assets')
-        .upload(filePath, compressedFile);
+        console.log("Comprimindo imagem...");
+        let fileToUpload: File | Blob = tempFile;
+        try {
+          fileToUpload = await imageCompression(tempFile, options);
+        } catch (compErr) {
+          console.warn("Falha na compressão, tentando upload original:", compErr);
+        }
 
-      if (uploadError) throw uploadError;
+        const fileExt = tempFile.name.split('.').pop() || 'jpg';
+        const fileName = `${Date.now()}.${fileExt}`;
+        const filePath = `heritage/${player.id}/${fileName}`;
 
-      // 2. Pegar URL Pública
-      const { data: { publicUrl } } = supabase.storage
-        .from('player_assets')
-        .getPublicUrl(filePath);
+        console.log("Enviando para o Storage:", filePath);
+        const { error: uploadError } = await supabase.storage
+          .from('player_assets')
+          .upload(filePath, fileToUpload, { cacheControl: '3600', upsert: false });
 
-      // 3. Salvar no Banco
-      const { error: dbError } = await supabase.from('heritage').insert([{
-        player_id: player.id,
-        title: newHeritage.title,
-        photo: publicUrl,
-        type: newHeritage.type,
-        date: new Date().toISOString().split('T')[0]
-      }]);
+        if (uploadError) throw new Error("Erro no Storage: " + uploadError.message);
 
-      if (dbError) {
-        console.error("Erro ao inserir no banco heritage:", dbError);
-        throw dbError;
-      }
+        const { data: { publicUrl } } = supabase.storage
+          .from('player_assets')
+          .getPublicUrl(filePath);
 
-      setNewHeritage({ title: '', photo: '', type: 'album' });
-      setTempFile(null);
-      setTempPreview(null);
-      fetchExtras();
-    } catch (err) {
-      console.error(err);
-      alert("Erro ao eternizar sua glória no bueiro.");
+        const { error: dbError } = await supabase.from('heritage').insert([{
+          player_id: player.id,
+          title: newHeritage.title,
+          photo: publicUrl,
+          type: newHeritage.type,
+          date: new Date().toISOString().split('T')[0]
+        }]);
+
+        if (dbError) throw new Error("Erro no Banco: " + dbError.message);
+
+        setNewHeritage({ title: '', photo: '', type: 'album' });
+        setTempFile(null);
+        setTempPreview(null);
+        fetchExtras();
+        return true;
+      })();
+
+      await Promise.race([uploadTask, timeout]);
+      alert("Sucesso! Sua glória foi eternizada.");
+    } catch (err: any) {
+      console.error("Erro no handleAddHeritage:", err);
+      alert(err.message || "Erro desconhecido ao salvar.");
     } finally {
       setIsSaving(false);
       setUploadProgress(false);
@@ -248,14 +275,17 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
       performer_id: currentUser.id,
       victim_id: player.id,
       type: type,
+      description: reportDescription,
       status: 'pending'
     }]);
 
     if (!error) {
-      alert(`DENÚNCIA DE ${type.toUpperCase()} ENVIADA! Aguarde a confirmação do ADM para ver a moral desse lixo cair.`);
+      alert("FEITO REPORTADO! O ADM vai julgar se é verdade ou choro.");
+      setReportDescription("");
+      setShowReportForm(null);
     } else {
       console.error(error);
-      alert("Falha ao processar o deboche.");
+      alert("Erro ao reportar. O bueiro tá entupido.");
     }
   };
 
@@ -454,13 +484,19 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
               ) : null}
             </div>
 
-            {/* DESTAQUES (BADGES SELECIONADAS) */}
-            <div className="flex flex-wrap justify-center md:justify-start gap-5 pt-2">
-              {highBadges.length > 0 ? (
-                highBadges.map(bid => <BadgeDisplay key={bid} badgeId={bid} showTitle />)
-              ) : (
-                player.badges.slice(0, 5).map(bid => <BadgeDisplay key={bid} badgeId={bid} />)
-              )}
+            {/* TODAS AS MEDALHAS (OBRIGATÓRIO) */}
+            <div className="flex flex-wrap justify-center md:justify-start gap-4 pt-2">
+              {player.badges.map(bid => {
+                const isHigh = highBadges.includes(bid);
+                return (
+                  <div key={bid} className={`transition-all duration-500 ${isHigh ? 'scale-110 relative z-10' : 'opacity-80 hover:opacity-100'}`}>
+                    <BadgeDisplay badgeId={bid} showTitle={isHigh} />
+                    {isHigh && (
+                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(234,179,8,0.5)] border border-black"></div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             <div className="flex flex-col md:flex-row gap-4 pt-4">
@@ -480,24 +516,48 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
                 </button>
               )}
 
-              {/* SISTEMA DE DEBOCHE (CONTRA O ADVERSÁRIO) */}
+              {/* SISTEMA DE FEITOS (HISTÓRICO DE GLÓRIA/VERGONHA) */}
               {currentUser && !isOwner && (
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleReportHumiliation('caneta')}
-                    className="p-4 bg-black border-2 border-red-900/50 text-red-600 hover:bg-red-900 hover:text-white transition-all text-xs font-black uppercase italic"
-                    title="Reportar Caneta"
-                  >🖊️ CANETA!</button>
-                  <button
-                    onClick={() => handleReportHumiliation('chapeu')}
-                    className="p-4 bg-black border-2 border-red-900/50 text-red-600 hover:bg-red-900 hover:text-white transition-all text-xs font-black uppercase italic"
-                    title="Reportar Chapéu"
-                  >👒 CHAPÉU!</button>
-                  <button
-                    onClick={() => handleReportHumiliation('humilhacao')}
-                    className="p-4 bg-black border-2 border-red-900/50 text-red-600 hover:bg-red-900 hover:text-white transition-all text-xs font-black uppercase italic"
-                    title="Humilhação Geral"
-                  >💀 HUMILHOU</button>
+                <div className="flex flex-col gap-2">
+                  {!showReportForm ? (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setShowReportForm('caneta')}
+                        className="p-4 bg-black border-2 border-red-900/50 text-red-600 hover:bg-red-900 hover:text-white transition-all text-xs font-black uppercase italic"
+                        title="Reportar Caneta"
+                      >🖊️ CANETA!</button>
+                      <button
+                        onClick={() => setShowReportForm('chapeu')}
+                        className="p-4 bg-black border-2 border-red-900/50 text-red-600 hover:bg-red-900 hover:text-white transition-all text-xs font-black uppercase italic"
+                        title="Reportar Chapéu"
+                      >👒 CHAPÉU!</button>
+                      <button
+                        onClick={() => setShowReportForm('humilhacao')}
+                        className="p-4 bg-black border-2 border-red-900/50 text-red-600 hover:bg-red-900 hover:text-white transition-all text-xs font-black uppercase italic"
+                        title="Humilhação Geral"
+                      >💀 HUMILHOU</button>
+                    </div>
+                  ) : (
+                    <div className="bg-neutral-900 border border-red-900/30 p-4 space-y-3 animate-in fade-in slide-in-from-top-2">
+                      <p className="text-[10px] font-black text-red-600 uppercase italic">Reportando {showReportForm.toUpperCase()}:</p>
+                      <textarea
+                        value={reportDescription}
+                        onChange={(e) => setReportDescription(e.target.value)}
+                        placeholder="Descreve o crime... Ex: 'Dei um rolinho seco no Tonoli'"
+                        className="w-full bg-black border border-neutral-800 p-2 text-xs text-white font-mono outline-none focus:border-red-600 h-20 resize-none"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => { setShowReportForm(null); setReportDescription(""); }}
+                          className="flex-1 py-2 border border-neutral-700 text-neutral-500 text-[10px] font-black uppercase hover:bg-neutral-800"
+                        >Cancelar</button>
+                        <button
+                          onClick={() => handleReportHumiliation(showReportForm)}
+                          className="flex-1 py-2 bg-red-800 text-white text-[10px] font-black uppercase hover:bg-red-700"
+                        >Protocolar Feito</button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -619,13 +679,7 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
             </div>
           </div>
 
-          {/* O RESTO DAS BADGES (GALERIA SECUNDÁRIA) */}
-          <div className="mt-24 border-t border-neutral-900 pt-12 pb-10">
-            <h4 className="text-[10px] font-black text-neutral-700 uppercase mb-8 tracking-[0.4em]">Honraria de Base & Infâmias</h4>
-            <div className="flex flex-wrap gap-6 opacity-60 hover:opacity-100 transition-opacity">
-              {player.badges.filter(bid => !highBadges.includes(bid)).map(bid => <BadgeDisplay key={bid} badgeId={bid} />)}
-            </div>
-          </div>
+          {/* GALERIA DE BADGES REMOVIDA DAQUI POIS AGORA TODAS APARECEM NO TOPO */}
 
         </div>
       </div>

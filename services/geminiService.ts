@@ -17,7 +17,7 @@ const getOpenAIClient = () => {
   });
 };
 
-export const geminiService = {
+export const aiService = {
   async generateBestPlayerText(name: string, position: string, stats: string) {
     const openai = getOpenAIClient();
     const response = await openai.chat.completions.create({

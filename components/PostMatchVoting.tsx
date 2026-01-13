@@ -27,8 +27,8 @@ const PostMatchVoting: React.FC<PostMatchVotingProps> = ({ players, currentUser,
 
     const updateCountdown = () => {
         const now = new Date();
-        const isMonday = now.getDay() === 1;
-        const isTuesday = now.getDay() === 2;
+        const matchDay = currentSession.matchDay ?? 1;
+        const lockDay = (matchDay + 1) % 7; // Fecha no dia seguinte à pelada
 
         // Se a pelada ainda não acabou, mostramos o cronômetro para o JOGO (20:15)
         if (currentSession.status !== 'finalizado') {
@@ -36,29 +36,35 @@ const PostMatchVoting: React.FC<PostMatchVotingProps> = ({ players, currentUser,
             setCountdownLabel("Início da Partida (20:15)");
 
             const target = new Date();
+            const daysToMatch = (matchDay - now.getDay() + 7) % 7;
+            target.setDate(now.getDate() + daysToMatch);
             target.setHours(20, 15, 0, 0);
-            if (now > target) target.setDate(target.getDate() + 1); // Caso já passou das 20:15 mas status não mudou
 
+            // Se hoje é o dia da pelada e já passou das 20:15, mas o status não é finalizado,
+            // pode ser que a live ainda esteja rolando.
             const diff = target.getTime() - now.getTime();
-            formatTime(diff);
+            formatTime(diff > 0 ? diff : 0);
         } else {
-            // Se a pelada ACABOU, mostramos o tempo para votar (até Segunda 23:59)
+            // Se a pelada ACABOU, mostramos o tempo para votar (até o dia seguinte 23:59)
             setCountdownLabel("Urnas fecham em:");
 
-            // Se for Terça, já bloqueia geral
-            if (isTuesday) {
+            // Se for o dia seguinte (lockDay), as urnas fecham à meia-noite (início do dia após lockDay)
+            // Na verdade, vamos dar o dia seguinte inteiro para votar.
+            const isLockDayOver = now.getDay() === (lockDay + 1) % 7;
+
+            if (isLockDayOver) {
                 setIsLocked(true);
             } else {
                 setIsLocked(false);
             }
 
             const deadline = new Date();
-            const daysToTuesday = (2 - now.getDay() + 7) % 7 || 7;
-            deadline.setDate(now.getDate() + daysToTuesday);
+            const daysToLock = (lockDay - now.getDay() + 7) % 7 || 7;
+            deadline.setDate(now.getDate() + daysToLock + 1); // Fim do dia seguinte
             deadline.setHours(0, 0, 0, 0);
 
             const diff = deadline.getTime() - now.getTime();
-            formatTime(diff);
+            formatTime(diff > 0 ? diff : 0);
         }
     };
 
@@ -247,7 +253,7 @@ const PostMatchVoting: React.FC<PostMatchVotingProps> = ({ players, currentUser,
                 )}
 
                 <div className="mt-20 opacity-50">
-                    <p className="text-[9px] font-black text-neutral-600 uppercase tracking-[0.3em] mb-2">As urnas serão lacradas na Segunda às 00:00</p>
+                    <p className="text-[9px] font-black text-neutral-600 uppercase tracking-[0.3em] mb-2">As urnas serão lacradas em breve.</p>
                     <div className="text-xl font-oswald font-black text-neutral-400 tabular-nums">
                         Tempo Restante: {timeLeft}
                     </div>

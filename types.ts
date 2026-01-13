@@ -60,6 +60,7 @@ export interface Player {
   specialEvents: SpecialEvent[];
   heritage?: HeritageItem[];
   invited_by?: string;
+  is_admin?: boolean;
 }
 
 export interface MatchSession {
@@ -67,6 +68,8 @@ export interface MatchSession {
   status: 'vago' | 'votacao_aberta' | 'em_jogo' | 'finalizado';
   votingOpen: boolean;
   playersPresent: string[];
+  matchDay?: number;
+  manualVotingStatus?: 'auto' | 'open' | 'closed';
 }
 export interface FinancialGoal {
   id: string;

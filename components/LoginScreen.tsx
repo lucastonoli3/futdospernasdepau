@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Player, Position, PlayerStatus } from '../types';
-import { geminiService } from '../services/geminiService';
+import { aiService } from '../services/geminiService';
 import { supabase } from '../services/supabaseClient';
 import imageCompression from 'browser-image-compression';
 
@@ -27,6 +27,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const startCamera = async () => {
     try {
@@ -51,6 +52,35 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     }
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsAnalyzing(true);
+    setError('');
+
+    try {
+      const options = {
+        maxSizeMB: 0.5,
+        maxWidthOrHeight: 800,
+        useWebWorker: true,
+      };
+
+      const compressedFile = await imageCompression(file, options);
+      const reader = new FileReader();
+      reader.readAsDataURL(compressedFile);
+      reader.onloadend = async () => {
+        const base64data = reader.result as string;
+        setFormData({ ...formData, photo: base64data });
+        stopCamera();
+        setIsAnalyzing(false);
+      };
+    } catch (err) {
+      setError('Erro ao processar imagem. Tenta outro arquivo.');
+      setIsAnalyzing(false);
+    }
+  };
+
   const takePhoto = async () => {
     if (videoRef.current && canvasRef.current) {
       const context = canvasRef.current.getContext('2d');
@@ -67,15 +97,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
         setError('');
         videoRef.current.pause();
 
-        const hasFace = await geminiService.validateFaceInImage(photoDataUrl);
+        setFormData({ ...formData, photo: photoDataUrl });
+        stopCamera();
 
-        if (hasFace) {
-          setFormData({ ...formData, photo: photoDataUrl });
-          stopCamera();
-        } else {
-          setError('Cadê tua cara, assombração? A IA não achou rosto nenhum.');
-          videoRef.current.play();
-        }
         setIsAnalyzing(false);
       }
     }
@@ -108,6 +132,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
             bestVotes: player.best_votes,
             worstVotes: player.worst_votes,
             moralScore: player.moral_score,
+            is_admin: player.is_admin || player.nickname?.toLowerCase() === 'tonoli',
             password: player.password
           };
           onLogin(formatted);
@@ -134,8 +159,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
       return;
     }
 
-    if (!isTonoli && (!formData.name || !formData.photo || !formData.invitedBy || !formData.newPassword)) {
-      setError('Preenche tudo, pereba. Nome, Foto, Padrinho e Senha são obrigatórios.');
+    if (!isTonoli && (!formData.name || !formData.invitedBy || !formData.newPassword)) {
+      setError('Preenche tudo, pereba. Nome, Padrinho e Senha são obrigatórios.');
       return;
     }
 
@@ -189,6 +214,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
           bestVotes: data.best_votes,
           worstVotes: data.worst_votes,
           moralScore: data.moral_score,
+          is_admin: data.is_admin || data.nickname?.toLowerCase() === 'tonoli',
           password: data.password
         });
       }
@@ -257,8 +283,15 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
           <form onSubmit={handleRegister} className="space-y-4">
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-[8px] font-black text-neutral-500 uppercase">Vulgo Selecionado</label>
-                <div className="p-2 bg-black border border-neutral-800 text-red-600 font-mono text-xs">{nickname || 'Nenhum'}</div>
+                <label className="block text-[8px] font-black text-neutral-500 uppercase">Seu Vulgo (Como será chamado)</label>
+                <input
+                  type="text"
+                  required
+                  className="w-full bg-black border border-neutral-800 p-2 text-red-600 font-mono text-xs focus:outline-none focus:border-red-600"
+                  value={nickname}
+                  onChange={e => setNickname(e.target.value)}
+                  placeholder="Ex: Bagre Pelado"
+                />
               </div>
               <button
                 type="button"
@@ -306,6 +339,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
 
             {/* CAMERA MOBILE FRIENDLY */}
             <div className="space-y-2">
+              <label className="block text-[10px] font-black text-neutral-400 uppercase">Foto de Perfil (Opcional, mas recomendado)</label>
               <div className="relative w-full aspect-video bg-black border border-neutral-800 flex items-center justify-center overflow-hidden">
                 {formData.photo ? (
                   <img src={formData.photo} className="w-full h-full object-cover" alt="Foto" />
@@ -317,7 +351,11 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
               </div>
 
               {!formData.photo && !isCameraOpen && (
-                <button type="button" onClick={startCamera} className="w-full bg-neutral-800 text-white text-[10px] py-1 border border-neutral-700 uppercase font-black">Ligar Câmera</button>
+                <div className="grid grid-cols-2 gap-2">
+                  <button type="button" onClick={startCamera} className="bg-neutral-800 text-white text-[10px] py-2 border border-neutral-700 uppercase font-black hover:bg-neutral-700 transition-all">Ligar Câmera</button>
+                  <button type="button" onClick={() => fileInputRef.current?.click()} className="bg-neutral-800 text-white text-[10px] py-2 border border-neutral-700 uppercase font-black hover:bg-neutral-700 transition-all">Subir Foto</button>
+                  <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
+                </div>
               )}
               {!formData.photo && isCameraOpen && (
                 <button type="button" onClick={takePhoto} className="w-full bg-red-600 text-white text-[10px] py-1 border border-red-500 uppercase font-black">Bater Retrato</button>

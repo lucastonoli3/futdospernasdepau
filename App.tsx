@@ -10,6 +10,7 @@ import Caixinha from './components/Caixinha';
 import PostMatchVoting from './components/PostMatchVoting';
 import PlayerProfile from './components/PlayerProfile';
 import { isLastMondayOfMonth, supabase } from './services/supabaseClient';
+import { aiService } from './services/geminiService';
 
 function App() {
   const [isLogged, setIsLogged] = useState(false);
@@ -70,6 +71,8 @@ function App() {
         specialEvents: p.special_events || [],
         heritage: p.heritage || [],
         thought: p.thought,
+        is_admin: p.is_admin || p.nickname?.toLowerCase() === 'tonoli',
+        isPaid: p.is_paid,
         high_badges: typeof p.high_badges === 'string' ? JSON.parse(p.high_badges) : p.high_badges,
       }));
       const filtered = formatted.filter(p => p.nickname !== 'AdminVantablack');
@@ -80,10 +83,62 @@ function App() {
   const fetchSession = async () => {
     const { data, error } = await supabase.from('sessions').select('*').eq('id', 1).single();
     if (data) {
+      // Lógica de Votagem Automática
+      const now = new Date();
+      const currentDay = now.getDay(); // 0-6 (Dom-Sab)
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+
+      const matchDay = data.match_day ?? 1; // Default Segunda
+      const manualStatus = data.manual_voting_status ?? 'auto';
+
+      let isVotingOpen = data.voting_open;
+
+      if (manualStatus === 'open') {
+        isVotingOpen = true;
+      } else if (manualStatus === 'closed') {
+        isVotingOpen = false;
+      } else {
+        // Modo AUTO: Fecha as 23:59 do dia da pelada
+        // Ajuste para considerar Domingo (0) como o dia 7 para facilitar comparação se o dia passou
+        const todayAdjusted = currentDay === 0 ? 7 : currentDay;
+        const matchDayAdjusted = matchDay === 0 ? 7 : matchDay;
+
+        if (todayAdjusted === matchDayAdjusted) {
+          if (currentHour >= 24) { // Praticamente nunca entra aqui pois muda o dia, mas ok
+            isVotingOpen = false;
+          } else {
+            isVotingOpen = data.voting_open;
+          }
+        } else if (todayAdjusted > matchDayAdjusted) {
+          // Hoje é depois da pelada (ex: Pelada Segunda(1), Hoje Terça(2))
+          isVotingOpen = false;
+        } else {
+          // Hoje é antes da pelada (ex: Pelada Segunda(1), Hoje Domingo(0/7) - Ops, wait.)
+          // Se Pelada é Segunda (1) e hoje é Domingo (0), todayAdjusted=7, so 7 > 1 is true.
+          // Isso ainda está errado. O ciclo deve resetar em algum momento.
+          // Vamos assumir que a votação abre na Quinta(4) ou Sexta(5).
+          // Se hoje é Terça(2), Quarta(3), Quinta cedo(4) -> Fechado.
+          // Se a pelada foi Segunda(1), fechamos na Terça(2).
+          // Então: fechado se (hoje > matchDay) e (hoje < matchDay + 4 dias de descanso)
+
+          const daysSinceMatch = (currentDay - matchDay + 7) % 7;
+          if (daysSinceMatch > 0 && daysSinceMatch < 4) {
+            isVotingOpen = false;
+          } else {
+            isVotingOpen = data.voting_open;
+          }
+        }
+      }
+
+      // Se o status calculado for diferente do banco e for AUTO, atualizamos (opcional para consistência visual)
+
       setCurrentSession({
         status: data.status as any,
-        votingOpen: data.voting_open,
-        playersPresent: [] // Placeholder
+        votingOpen: isVotingOpen,
+        playersPresent: data.players_present || [],
+        matchDay: data.match_day,
+        manualVotingStatus: data.manual_voting_status
       });
     }
   };
@@ -191,7 +246,7 @@ function App() {
                 onClick={() => setActiveTab('resenha')}
                 className="bg-red-700 hover:bg-red-800 text-white px-4 py-2 font-oswald font-bold uppercase italic text-sm border border-red-900 shadow-[0_0_15px_rgba(185,28,28,0.3)] transition-all"
               >
-                Entrar / Jogar
+                Entrar / FEITOS
               </button>
             )}
           </div>
@@ -218,18 +273,34 @@ function App() {
               <LoginScreen onLogin={handleLogin} />
             ) : (
               <>
-                {activeTab === 'partida' && <MatchControl players={allPlayers} currentUser={currentUser!} />}
+                {activeTab === 'partida' && currentSession && <MatchControl players={allPlayers} currentUser={currentUser!} currentSession={currentSession} />}
                 {activeTab === 'resenha' && <ChatResenha currentUser={currentUser!} allPlayers={allPlayers} />}
                 {activeTab === 'financeiro' && <Caixinha players={allPlayers} finances={finances!} currentUser={currentUser!} />}
                 {activeTab === 'admin' && (
-                  <AdminPanel
-                    players={allPlayers}
-                    currentSession={currentSession!}
-                    finances={finances!}
-                    onUpdateFinances={fetchFinances}
-                    onUpdatePlayer={() => fetchPlayers()}
-                    onUpdateSession={() => fetchSession()}
-                  />
+                  currentUser?.is_admin ? (
+                    <AdminPanel
+                      players={allPlayers}
+                      currentSession={currentSession!}
+                      finances={finances!}
+                      onUpdateFinances={fetchFinances}
+                      onUpdatePlayer={() => fetchPlayers()}
+                      onUpdateSession={() => fetchSession()}
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center p-20 text-center space-y-4">
+                      <span className="text-6xl">🚫</span>
+                      <h2 className="text-4xl font-oswald font-black text-red-600 uppercase italic">Acesso Negado</h2>
+                      <p className="max-w-md text-neutral-500 font-mono text-xs uppercase tracking-widest">
+                        Área restrita aos administradores do bueiro. Sai daqui antes que eu te dê um rapa.
+                      </p>
+                      <button
+                        onClick={() => setActiveTab('dashboard')}
+                        className="bg-white text-black px-6 py-2 font-oswald font-black uppercase text-xs hover:bg-red-600 hover:text-white transition-all"
+                      >
+                        Voltar para o Rank
+                      </button>
+                    </div>
+                  )
                 )}
                 {activeTab === 'votacao' && <PostMatchVoting players={allPlayers} onSubmit={handleApplyVotes} currentUser={currentUser!} currentSession={currentSession!} />}
               </>
@@ -250,7 +321,7 @@ function App() {
             label="Voto"
             urgent={currentSession?.votingOpen}
           />
-          <NavButton active={activeTab === 'resenha'} onClick={() => setActiveTab('resenha')} icon="🍻" label="Resenha" />
+          <NavButton active={activeTab === 'resenha'} onClick={() => setActiveTab('resenha')} icon="🏆" label="FEITOS" />
           <NavButton active={activeTab === 'financeiro'} onClick={() => setActiveTab('financeiro')} icon="💸" label="Caixa" />
           <NavButton active={activeTab === 'admin'} onClick={() => setActiveTab('admin')} icon="⚙️" label="Admin" color="text-red-600" />
         </div>

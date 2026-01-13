@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Player, MatchSession, GlobalFinances, FinancialGoal } from '../types';
 import { supabase } from '../services/supabaseClient';
+import { ALL_BADGES } from '../constants';
+import BadgeDisplay from './BadgeDisplay';
+import { checkAndAssignBadges } from '../services/statsService';
 
 interface AdminPanelProps {
     players: Player[];
@@ -38,10 +41,37 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ players, currentSession, financ
         if (data) setPendingHumiliations(data);
     };
 
-    const updateSession = async (updates: any) => {
+    const handleUpdateStat = async (playerId: string, type: 'goals' | 'assists') => {
+        const player = players.find(p => p.id === playerId);
+        if (!player) return;
+
+        const newValue = (type === 'goals' ? player.goals : player.assists) + 1;
+
+        const { error } = await supabase
+            .from('players')
+            .update({ [type === 'goals' ? 'goals' : 'assists']: newValue })
+            .eq('id', playerId);
+
+        if (!error) {
+            onUpdatePlayer();
+            // Verificar badges automáticas após o update
+            const updatedPlayer = { ...player, [type]: newValue };
+            await checkAndAssignBadges(updatedPlayer as Player);
+        }
+    };
+
+    const updateSession = async (updates: Partial<MatchSession>) => {
+        // Mapear campos camelCase para snake_case do Supabase
+        const dbUpdates: any = {};
+        if (updates.status !== undefined) dbUpdates.status = updates.status;
+        if (updates.votingOpen !== undefined) dbUpdates.voting_open = updates.votingOpen;
+        if (updates.playersPresent !== undefined) dbUpdates.players_present = updates.playersPresent;
+        if (updates.matchDay !== undefined) dbUpdates.match_day = updates.matchDay;
+        if (updates.manualVotingStatus !== undefined) dbUpdates.manual_voting_status = updates.manualVotingStatus;
+
         const { error } = await supabase
             .from('sessions')
-            .update(updates)
+            .update(dbUpdates)
             .eq('id', 1);
 
         if (error) {
@@ -80,7 +110,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ players, currentSession, financ
             current: 0
         };
 
-        const updatedGoals = [...(finances.goals || []), goal];
+        const currentGoals = finances?.goals || [];
+        const updatedGoals = [...(Array.isArray(currentGoals) ? currentGoals : []), goal];
         const { error } = await supabase.from('finances').update({ goals: updatedGoals }).eq('id', 1);
         if (!error) {
             onUpdateFinances();
@@ -122,7 +153,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ players, currentSession, financ
     const handleTogglePaid = async (player: Player) => {
         const { error } = await supabase
             .from('players')
-            .update({ isPaid: !player.isPaid, debt: !player.isPaid ? 0 : 25 })
+            .update({ is_paid: !player.isPaid, debt: !player.isPaid ? 0 : 25 })
             .eq('id', player.id);
 
         if (!error) {
@@ -140,24 +171,63 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ players, currentSession, financ
         // 1. Confirmar no bueiro
         const { error: hError } = await supabase
             .from('humiliations')
-            .update({ status: 'confirmed' })
+            .update({
+                status: 'confirmed',
+                badge_id: h.badge_id // Garantir que está salvo se houver
+            })
             .eq('id', h.id);
 
         if (hError) return;
 
-        // 2. Atualizar Moral
+        // 2. Atualizar Moral e dar Badge
         const performer = players.find(p => p.id === h.performer_id);
         const victim = players.find(p => p.id === h.victim_id);
 
         if (performer && victim) {
-            // Performa ganha 10, Vitima perde 10
-            await supabase.from('players').update({ moral_score: Math.min(100, performer.moralScore + 10) }).eq('id', performer.id);
-            await supabase.from('players').update({ moral_score: Math.max(0, victim.moralScore - 10) }).eq('id', victim.id);
+            // Performer ganha 10, Vítima perde 10
+            const newPerformerMoral = Math.min(100, (performer?.moralScore || 0) + 10);
+            const newVictimMoral = Math.max(0, (victim?.moralScore || 0) - 10);
+
+            // Adicionar badge opcional ao performer
+            let performerBadges = [...(performer.badges || [])];
+            if (h.badge_id && !performerBadges.includes(h.badge_id)) {
+                performerBadges.push(h.badge_id);
+            }
+
+            await supabase.from('players').update({
+                moral_score: newPerformerMoral,
+                badges: performerBadges
+            }).eq('id', performer.id);
+
+            await supabase.from('players').update({
+                moral_score: newVictimMoral
+            }).eq('id', victim.id);
         }
 
         fetchHumiliations();
         onUpdatePlayer();
-        alert("HUMILHAÇÃO CONFIRMADA! A moral caiu como um tijolo.");
+        alert("CRIME CONFIRMADO! A moral foi ajustada e a medalha entregue.");
+    };
+
+    const handleGiveBadge = async (playerId: string, badgeId: string) => {
+        const player = players.find(p => p.id === playerId);
+        if (!player) return;
+
+        let updatedBadges = [...player.badges];
+        if (updatedBadges.includes(badgeId)) {
+            updatedBadges = updatedBadges.filter(b => b !== badgeId);
+        } else {
+            updatedBadges.push(badgeId);
+        }
+
+        const { error } = await supabase
+            .from('players')
+            .update({ badges: updatedBadges })
+            .eq('id', player.id);
+
+        if (!error) {
+            onUpdatePlayer();
+        }
     };
 
     return (
@@ -190,29 +260,56 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ players, currentSession, financ
                                 const performer = players.find(p => p.id === h.performer_id);
                                 const victim = players.find(p => p.id === h.victim_id);
                                 return (
-                                    <div key={h.id} className="bg-black border border-neutral-800 p-4 flex flex-col md:flex-row items-center justify-between gap-4">
-                                        <div className="flex items-center gap-4">
-                                            <div className="text-center">
-                                                <p className="text-[9px] text-green-500 font-black uppercase">Executor</p>
-                                                <p className="text-white font-oswald uppercase">{performer?.nickname || '???'}</p>
+                                    <div key={h.id} className="bg-black border border-neutral-800 p-4 flex flex-col gap-4">
+                                        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                                            <div className="flex items-center gap-4">
+                                                <div className="text-center">
+                                                    <p className="text-[9px] text-green-500 font-black uppercase">Executor</p>
+                                                    <p className="text-white font-oswald uppercase">{performer?.nickname || '???'}</p>
+                                                </div>
+                                                <div className="text-red-600 font-black text-xl italic animate-bounce">
+                                                    ➔ {h.type.toUpperCase()} ➔
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-[9px] text-red-500 font-black uppercase">Vítima</p>
+                                                    <p className="text-white font-oswald uppercase">{victim?.nickname || '???'}</p>
+                                                </div>
                                             </div>
-                                            <div className="text-red-600 font-black text-xl italic animate-bounce">
-                                                ➔ {h.type.toUpperCase()} ➔
-                                            </div>
-                                            <div className="text-center">
-                                                <p className="text-[9px] text-red-500 font-black uppercase">Vítima</p>
-                                                <p className="text-white font-oswald uppercase">{victim?.nickname || '???'}</p>
+
+                                            <div className="bg-neutral-800/50 p-3 flex-1 border-l-2 border-red-600">
+                                                <p className="text-[9px] text-neutral-500 uppercase font-black mb-1">Relato do Ocorrido:</p>
+                                                <p className="text-xs text-white italic font-mono">"{h.description || 'Sem detalhes...'}"</p>
                                             </div>
                                         </div>
-                                        <div className="flex gap-2 w-full md:w-auto">
-                                            <button
-                                                onClick={() => handleConfirmHumiliation(h, false)}
-                                                className="flex-1 md:flex-none px-6 py-2 border border-neutral-700 text-neutral-500 hover:bg-white hover:text-black transition-all text-[10px] font-black uppercase italic"
-                                            >Mentira (Recusar)</button>
-                                            <button
-                                                onClick={() => handleConfirmHumiliation(h, true)}
-                                                className="flex-1 md:flex-none px-6 py-2 bg-red-700 hover:bg-red-600 text-white transition-all text-[10px] font-black uppercase italic shadow-[0_0_20px_rgba(185,28,28,0.2)]"
-                                            >CONFIRMO O CRIME</button>
+
+                                        <div className="flex flex-col md:flex-row gap-4 items-center border-t border-neutral-800 pt-4">
+                                            <div className="flex-1 w-full">
+                                                <p className="text-[9px] text-neutral-500 uppercase font-black mb-2">Condecorar com Badge? (Opcional):</p>
+                                                <select
+                                                    value={h.badge_id || ''}
+                                                    onChange={async (e) => {
+                                                        const newVal = e.target.value;
+                                                        await supabase.from('humiliations').update({ badge_id: newVal }).eq('id', h.id);
+                                                        fetchHumiliations();
+                                                    }}
+                                                    className="w-full bg-black border border-neutral-800 p-2 text-[10px] text-white font-mono outline-none focus:border-red-600 appearance-none"
+                                                >
+                                                    <option value="">Nenhuma Badge</option>
+                                                    {ALL_BADGES.map(b => (
+                                                        <option key={b.id} value={b.id}>{b.icon} {b.name}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="flex gap-2 w-full md:w-auto">
+                                                <button
+                                                    onClick={() => handleConfirmHumiliation(h, false)}
+                                                    className="flex-1 md:flex-none px-6 py-3 border border-neutral-700 text-neutral-500 hover:bg-white hover:text-black transition-all text-[10px] font-black uppercase italic"
+                                                >Falsidade (Recusar)</button>
+                                                <button
+                                                    onClick={() => handleConfirmHumiliation(h, true)}
+                                                    className="flex-1 md:flex-none px-6 py-3 bg-red-700 hover:bg-red-600 text-white transition-all text-[10px] font-black uppercase italic shadow-[0_0_20px_rgba(185,28,28,0.2)]"
+                                                >É VERDADE (CONFIRMAR)</button>
+                                            </div>
                                         </div>
                                     </div>
                                 );
@@ -375,37 +472,156 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ players, currentSession, financ
                     </div>
                 </section>
 
+                {/* 🏟️ CONTROLE DE PARTIDA (LIVE) */}
+                {
+                    currentSession?.status === 'em_jogo' && (
+                        <section className="bg-neutral-900 border-2 border-blue-900 p-6 space-y-6 lg:col-span-2 shadow-[0_0_50px_rgba(37,99,235,0.1)]">
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-xl font-oswald text-blue-500 uppercase italic flex items-center gap-2 underline decoration-blue-900">
+                                    <span className="animate-pulse">🏟️</span> Controle de Partida (Em Tempo Real)
+                                </h3>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                {players.map(p => {
+                                    const isPresent = currentSession?.playersPresent?.includes(p.id);
+                                    if (!isPresent && (currentSession?.playersPresent?.length || 0) > 0) return null;
+
+                                    return (
+                                        <div key={p.id} className="bg-black border border-neutral-800 p-4 flex flex-col gap-3">
+                                            <div className="flex items-center gap-3">
+                                                <img src={p.photo} className="w-10 h-10 object-cover border border-neutral-800" />
+                                                <div>
+                                                    <p className="text-white font-oswald text-sm uppercase">{p.nickname}</p>
+                                                    <div className="flex gap-2 text-[9px] font-mono uppercase text-neutral-500">
+                                                        <span>Gols: {p.goals}</span>
+                                                        <span>Ast: {p.assists}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => handleUpdateStat(p.id, 'goals')}
+                                                    className="flex-1 py-2 bg-green-900/20 border border-green-600/30 text-green-500 font-black font-oswald text-[10px] uppercase hover:bg-green-600 hover:text-black transition-all"
+                                                >+ GOL</button>
+                                                <button
+                                                    onClick={() => handleUpdateStat(p.id, 'assists')}
+                                                    className="flex-1 py-2 bg-blue-900/20 border border-blue-600/30 text-blue-500 font-black font-oswald text-[10px] uppercase hover:bg-blue-600 hover:text-black transition-all"
+                                                >+ ASSIST</button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </section>
+                    )
+                }
+
                 <section className="bg-neutral-900 border border-neutral-800 p-6 lg:col-span-2">
-                    <h3 className="text-lg font-oswald text-white uppercase italic mb-6">⏰ Controle de Ciclo da Pelada</h3>
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                        <h3 className="text-lg font-oswald text-white uppercase italic flex items-center gap-2">
+                            <span>⏰</span> Planejamento & Votação (Ciclo Semanal)
+                        </h3>
+                        <div className="flex gap-2 w-full md:w-auto">
+                            <select
+                                value={currentSession?.matchDay ?? 1}
+                                onChange={(e) => updateSession({ matchDay: parseInt(e.target.value) })}
+                                className="bg-black border border-neutral-700 text-[10px] text-white font-black uppercase p-2 outline-none focus:border-white"
+                            >
+                                {['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'].map((day, idx) => (
+                                    <option key={idx} value={idx}>Dia da Pelada: {day}</option>
+                                ))}
+                            </select>
+                            <select
+                                value={currentSession?.manualVotingStatus ?? 'auto'}
+                                onChange={(e) => updateSession({ manualVotingStatus: e.target.value as any })}
+                                className="bg-black border border-neutral-700 text-[10px] text-white font-black uppercase p-2 outline-none focus:border-white"
+                            >
+                                <option value="auto">Modo: Automático (23:59)</option>
+                                <option value="open">Modo: SEMPRE ABERTO</option>
+                                <option value="closed">Modo: SEMPRE FECHADO</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
                         <button
-                            onClick={() => onUpdateSession({ ...currentSession, votingOpen: true, status: 'votacao_aberta' })}
+                            onClick={() => updateSession({ votingOpen: true, status: 'votacao_aberta' })}
                             className="py-4 border border-yellow-600/30 text-yellow-500 font-black font-oswald uppercase text-xs hover:bg-yellow-600 hover:text-black transition-all italic"
                         >
                             Abrir Chamada (Presença)
                         </button>
                         <button
-                            onClick={() => onUpdateSession({ ...currentSession, status: 'em_jogo' })}
+                            onClick={async () => {
+                                if (!currentSession) return;
+                                // Incrementar matches_played para todos os selecionados
+                                for (const p of players) {
+                                    if (currentSession.playersPresent?.includes(p.id)) {
+                                        const newMatches = (p.matchesPlayed || 0) + 1;
+                                        await supabase.from('players').update({ matches_played: newMatches }).eq('id', p.id);
+                                        // Verificar badge de presença
+                                        await checkAndAssignBadges({ ...p, matchesPlayed: newMatches });
+                                    }
+                                }
+                                updateSession({ status: 'em_jogo' });
+                                onUpdatePlayer();
+                            }}
                             className="py-4 border border-blue-600/30 text-blue-500 font-black font-oswald uppercase text-xs hover:bg-blue-600 hover:text-black transition-all italic"
                         >
                             Apitar Início (Live)
                         </button>
                         <button
-                            onClick={() => onUpdateSession({ ...currentSession, status: 'finalizado', votingOpen: true })}
+                            onClick={() => currentSession && updateSession({ status: 'finalizado', votingOpen: true })}
                             className="py-4 border border-red-600/30 text-red-500 font-black font-oswald uppercase text-xs hover:bg-red-600 hover:text-black transition-all italic"
                         >
                             Encerrar & Votar
                         </button>
                         <button
-                            onClick={() => { if (confirm("Zerar semana?")) onUpdateSession({ ...currentSession, status: 'vago' }) }}
+                            onClick={() => { if (currentSession && confirm("Zerar semana?")) updateSession({ status: 'vago', votingOpen: false, manualVotingStatus: 'auto' }) }}
                             className="py-4 border border-neutral-700 text-neutral-500 font-black font-oswald uppercase text-xs hover:bg-white hover:text-black transition-all italic"
                         >
                             Resetar Ciclo
                         </button>
                     </div>
                 </section>
-            </div>
-        </div>
+                <section className="bg-neutral-900 border border-neutral-800 p-6 lg:col-span-2">
+                    <h3 className="text-lg font-oswald text-purple-600 uppercase italic mb-6 flex items-center gap-2">
+                        <span>🏅</span> Loja de Condecorações (Badge Management)
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {players.map(p => (
+                            <div key={p.id} className="bg-black border border-neutral-800 p-4 space-y-3">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <img src={p.photo} className="w-8 h-8 rounded-full border border-neutral-700" />
+                                    <p className="text-xs font-black text-white uppercase">{p.nickname}</p>
+                                </div>
+                                <div className="flex flex-wrap gap-1">
+                                    {p.badges?.map(bid => (
+                                        <div key={bid} onClick={() => handleGiveBadge(p.id, bid)} className="cursor-pointer opacity-80 hover:opacity-100 hover:scale-110 transition-all">
+                                            <BadgeDisplay badgeId={bid} />
+                                        </div>
+                                    ))}
+                                </div>
+                                <select
+                                    onChange={(e) => {
+                                        if (e.target.value) {
+                                            handleGiveBadge(p.id, e.target.value);
+                                            e.target.value = "";
+                                        }
+                                    }}
+                                    className="w-full bg-neutral-900 border border-neutral-800 p-2 text-[9px] text-neutral-500 uppercase font-black outline-none focus:border-purple-600"
+                                >
+                                    <option value="">Condecorar / Retirar...</option>
+                                    {ALL_BADGES.map(b => (
+                                        <option key={b.id} value={b.id}>{b.icon} {b.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            </div >
+        </div >
     );
 };
 
