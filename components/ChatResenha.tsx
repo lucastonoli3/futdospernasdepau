@@ -118,9 +118,12 @@ const ChatResenha: React.FC<ChatResenhaProps> = ({ currentUser, allPlayers }) =>
     setInput(value);
     setCursorPos(position);
 
-    const lastAt = value.lastIndexOf('@', position - 1);
-    if (lastAt !== -1) {
-      const query = value.substring(lastAt + 1, position);
+    const textBeforeCursor = value.substring(0, position);
+    const lastAt = textBeforeCursor.lastIndexOf('@');
+
+    // Verifica se o @ está no início ou depois de um espaço
+    if (lastAt !== -1 && (lastAt === 0 || textBeforeCursor[lastAt - 1] === ' ')) {
+      const query = textBeforeCursor.substring(lastAt + 1);
       if (!query.includes(' ')) {
         setMentionSearch(query);
         setShowMentionList(true);
@@ -179,7 +182,7 @@ const ChatResenha: React.FC<ChatResenhaProps> = ({ currentUser, allPlayers }) =>
   ].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
   const filteredPlayers = allPlayers.filter(p =>
-    p.nickname.toLowerCase().includes(mentionSearch.toLowerCase()) && p.id !== currentUser.id
+    p.nickname.toLowerCase().includes(mentionSearch.toLowerCase())
   );
 
   return (
