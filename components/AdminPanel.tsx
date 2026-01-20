@@ -31,6 +31,24 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ players, currentSession, financ
     // Estados para Humilhações
     const [pendingHumiliations, setPendingHumiliations] = useState<any[]>([]);
 
+    // Estados para Badges (Premium)
+    const [selectedPlayerForBadge, setSelectedPlayerForBadge] = useState<Player | null>(null);
+    const [badgeSearch, setBadgeSearch] = useState('');
+    const [selectedBadgeCategory, setSelectedBadgeCategory] = useState<string>('Todas');
+
+    const filteredBadges = () => {
+        return ALL_BADGES.filter(b => {
+            const matchesSearch = b.name.toLowerCase().includes(badgeSearch.toLowerCase()) ||
+                b.description.toLowerCase().includes(badgeSearch.toLowerCase());
+            const matchesCategory = selectedBadgeCategory === 'Todas' || b.category === selectedBadgeCategory;
+            return matchesSearch && matchesCategory;
+        });
+    };
+
+    const selectedPlayerByBadges = (badgeIds: string[]) => {
+        return ALL_BADGES.filter(b => badgeIds.includes(b.id));
+    };
+
     React.useEffect(() => {
         fetchHumiliations();
     }, []);
@@ -267,6 +285,70 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ players, currentSession, financ
         }
     };
 
+    const handleResetSessionList = async () => {
+        if (!confirm('⚠️ ATENÇÃO: Isso apagará a lista de presença e resetará o status de pagamento de TODOS os jogadores para a nova pelada. Confirmar?')) return;
+
+        setLoading(true);
+        try {
+            // 1. Limpar lista de presença na sessão
+            const { error: sError } = await supabase
+                .from('sessions')
+                .update({ players_present: [] })
+                .eq('id', 1);
+
+            if (sError) throw sError;
+
+            // 2. Resetar status de pagamento e dívida de todos os jogadores
+            const { error: pError } = await supabase
+                .from('players')
+                .update({ is_paid: false, debt: 25 })
+                .filter('id', 'neq', '00000000-0000-0000-0000-000000000000');
+
+            if (pError) throw pError;
+
+            alert('LISTA RESETADA E CAIXA PREPARADO PARA A PRÓXIMA! 🏟️');
+
+            // Notificar Webhook do Make sobre o Reset
+            fetch('https://hook.us2.make.com/9047p2y3vlis2gepi28i2md83cp0515d', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    event: 'reset_lista',
+                    timestamp: new Date().toISOString()
+                })
+            }).catch(err => console.error('Erro ao notificar webhook reset:', err));
+
+            onUpdateSession();
+            onUpdatePlayer();
+        } catch (err: any) {
+            console.error('Erro no reset da lista:', err);
+            alert(`ERRO AO RESETAR LISTA: ${err.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleTestWebhook = async () => {
+        setLoading(true);
+        try {
+            const response = await fetch('https://hook.us2.make.com/9047p2y3vlis2gepi28i2md83cp0515d', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    event: 'teste_manual',
+                    message: 'Ping do Administrador! O bueiro está online.',
+                    timestamp: new Date().toISOString()
+                })
+            });
+            if (response.ok) alert('SINAL ENVIADO! Verifique o Make.com 🚀');
+            else alert('Erro ao enviar sinal. Verifique a URL.');
+        } catch (err: any) {
+            alert(`ERRO: ${err.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const TabButton = ({ id, label, icon }: { id: any, label: string, icon: string }) => (
         <button
             onClick={() => setActiveTab(id)}
@@ -362,6 +444,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ players, currentSession, financ
                                                 onClick={() => handleUpdateStatus('finalizado')}
                                                 className={`p-4 rounded-xl border font-oswald uppercase italic text-xs transition-all ${currentSession?.status === 'finalizado' ? 'bg-red-600 text-white border-red-500' : 'bg-neutral-800 text-neutral-400 border-neutral-700 hover:border-neutral-500'}`}
                                             >FINALIZAR</button>
+                                        </div>
+
+                                        <div className="pt-4 border-t border-neutral-800/50">
+                                            <button
+                                                onClick={handleResetSessionList}
+                                                disabled={loading}
+                                                className="w-full py-5 bg-red-600 text-white font-oswald font-black uppercase italic text-sm tracking-[0.2em] rounded-2xl hover:bg-red-500 transition-all active:scale-[0.98] shadow-xl shadow-red-900/20"
+                                            >
+                                                {loading ? 'PROCESSANDO...' : '☢️ RESETAR LISTA E CAIXA ☢️'}
+                                            </button>
+                                            <p className="text-[8px] text-neutral-600 font-mono uppercase text-center mt-2 italic">Limpa confirmados e reseta débitos p/ R$ 25</p>
                                         </div>
                                     </div>
                                 </div>
@@ -511,28 +604,29 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ players, currentSession, financ
                                 </div>
 
                                 <div className="mt-8 border-t border-neutral-800 pt-8">
-                                    <h4 className="text-xs font-mono uppercase text-neutral-500 tracking-widest mb-4">Gestão de Badges</h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-64 overflow-y-auto pr-2 custom-scrollbar">
+                                    <h4 className="text-xs font-mono uppercase text-neutral-500 tracking-widest mb-4">Gestão de Badges Premium</h4>
+                                    <div className="space-y-3 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
                                         {players.sort((a, b) => a.nickname.localeCompare(b.nickname)).map(p => (
-                                            <div key={p.id} className="bg-black/30 border border-neutral-800 p-3 rounded-xl flex items-center justify-between">
-                                                <div className="flex items-center gap-2">
-                                                    <img src={p.photo} className="w-8 h-8 object-cover rounded-full" />
-                                                    <p className="text-[10px] font-oswald text-white uppercase italic">{p.nickname}</p>
+                                            <div key={p.id} className="bg-black/30 border border-neutral-800 p-3 rounded-2xl flex items-center justify-between group hover:border-red-900/50 transition-all">
+                                                <div className="flex items-center gap-3">
+                                                    <img src={p.photo} className="w-10 h-10 object-cover rounded-full border border-neutral-800" />
+                                                    <div>
+                                                        <p className="text-xs font-oswald text-white uppercase italic">{p.nickname}</p>
+                                                        <div className="flex gap-1 mt-1">
+                                                            {p.badges.slice(0, 5).map(bid => {
+                                                                const b = ALL_BADGES.find(x => x.id === bid);
+                                                                return b ? <span key={bid} className="text-[10px]" title={b.name}>{b.icon}</span> : null;
+                                                            })}
+                                                            {p.badges.length > 5 && <span className="text-[8px] text-neutral-600">+{p.badges.length - 5}</span>}
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <select
-                                                    onChange={(e) => {
-                                                        if (e.target.value) {
-                                                            handleGiveBadge(p.id, e.target.value);
-                                                            e.target.value = "";
-                                                        }
-                                                    }}
-                                                    className="bg-neutral-900 border border-neutral-800 text-[8px] text-neutral-500 uppercase p-1 rounded"
+                                                <button
+                                                    onClick={() => setSelectedPlayerForBadge(p)}
+                                                    className="px-4 py-2 bg-neutral-900 text-[10px] font-black uppercase text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-xl transition-all border border-neutral-800"
                                                 >
-                                                    <option value="">Badge...</option>
-                                                    {ALL_BADGES.map(b => (
-                                                        <option key={b.id} value={b.id}>{b.icon} {b.name}</option>
-                                                    ))}
-                                                </select>
+                                                    GERENCIAR
+                                                </button>
                                             </div>
                                         ))}
                                     </div>
@@ -663,6 +757,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ players, currentSession, financ
                                     </div>
 
                                     <button
+                                        onClick={handleTestWebhook}
+                                        disabled={loading}
+                                        className="w-full flex items-center justify-between p-5 bg-[#ff0055]/5 rounded-2xl border border-[#ff0055]/20 hover:border-[#ff0055]/50 transition-all mb-4"
+                                    >
+                                        <div>
+                                            <p className="text-white font-oswald uppercase italic text-sm">Testar Conexão Make</p>
+                                            <p className="text-[9px] text-[#ff0055] font-mono uppercase tracking-widest">Enviar sinal de teste para o WhatsApp</p>
+                                        </div>
+                                        <span className="text-[#ff0055] font-black text-xl">{loading ? '⌛' : '🛰️'}</span>
+                                    </button>
+
+                                    <button
                                         onClick={() => onUpdateFinances()}
                                         className="w-full flex items-center justify-between p-5 bg-black/40 rounded-2xl border border-neutral-800 hover:border-blue-900/30 transition-all"
                                     >
@@ -685,8 +791,126 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ players, currentSession, financ
                         </div>
                     )}
                 </div>
-            </div>
-        </div>
+            </div >
+
+            {/* MODAL DE BADGES PREMIUM */}
+            {
+                (() => {
+                    const activePlayer = players.find(p => p.id === selectedPlayerForBadge?.id);
+                    if (!activePlayer) return null;
+
+                    return (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-in fade-in duration-300">
+                            <div className="w-full max-w-4xl max-h-[90vh] glass-panel border border-white/10 flex flex-col overflow-hidden shadow-[0_0_100px_rgba(220,38,38,0.2)]">
+                                {/* Header do Modal */}
+                                <div className="p-6 border-b border-white/5 flex justify-between items-center bg-gradient-to-r from-red-950/20 to-transparent">
+                                    <div className="flex items-center gap-4">
+                                        <img src={activePlayer.photo} className="w-16 h-16 rounded-full border-2 border-red-600 object-cover shadow-[0_0_20px_rgba(185,28,28,0.5)]" />
+                                        <div>
+                                            <h4 className="font-oswald text-2xl font-black uppercase italic tracking-tighter text-white">PORTFÓLIO DE BADGES</h4>
+                                            <p className="text-xs font-mono text-red-500 uppercase tracking-widest">Atleta: {activePlayer.nickname}</p>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => setSelectedPlayerForBadge(null)} className="text-neutral-500 hover:text-white transition-colors text-2xl">✕</button>
+                                </div>
+
+                                <div className="flex-1 overflow-hidden flex flex-col md:flex-row">
+                                    {/* Badges Atuais */}
+                                    <div className="w-full md:w-1/3 border-b md:border-b-0 md:border-r border-white/5 p-6 bg-black/40 overflow-y-auto custom-scrollbar">
+                                        <h5 className="text-[10px] font-black uppercase text-neutral-500 mb-4 tracking-[0.3em]">Badges Ativas ({activePlayer.badges.length})</h5>
+                                        <div className="space-y-2">
+                                            {activePlayer.badges.length === 0 ? (
+                                                <div className="p-8 text-center border border-dashed border-neutral-800 rounded-2xl flex flex-col items-center gap-2">
+                                                    <span className="text-3xl grayscale opacity-20">💩</span>
+                                                    <p className="text-[10px] text-neutral-600 uppercase font-bold italic text-center">Nenhuma honraria registrada ainda.</p>
+                                                </div>
+                                            ) : (
+                                                selectedPlayerByBadges(activePlayer.badges).map(badge => (
+                                                    <div key={badge.id} className="group flex items-center justify-between bg-neutral-900 border border-neutral-800 p-2.5 rounded-xl hover:border-red-900/50 transition-all">
+                                                        <div className="flex items-center gap-3">
+                                                            <span className="text-xl">{badge.icon.startsWith('/') ? <img src={badge.icon} className="w-6 h-6 rounded-full object-cover" /> : badge.icon}</span>
+                                                            <div>
+                                                                <p className="text-[10px] font-black text-white uppercase italic">{badge.name}</p>
+                                                                <p className="text-[8px] text-neutral-600 uppercase">{badge.category}</p>
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => handleGiveBadge(activePlayer.id, badge.id)}
+                                                            className="text-[10px] text-neutral-700 hover:text-red-500 p-1 opacity-0 group-hover:opacity-100 transition-all"
+                                                        >REMOVER</button>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Seleção de Novas Badges */}
+                                    <div className="flex-1 flex flex-col bg-neutral-950/50">
+                                        {/* Filtros e Busca */}
+                                        <div className="p-6 space-y-4 border-b border-white/5">
+                                            <div className="relative">
+                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500">🔍</span>
+                                                <input
+                                                    type="text"
+                                                    placeholder="BUSCAR BADGE (EX: ARTILHEIRO, MATADOR...)"
+                                                    value={badgeSearch}
+                                                    onChange={(e) => setBadgeSearch(e.target.value)}
+                                                    className="w-full bg-black border border-neutral-800 p-4 pl-12 text-sm text-white font-oswald uppercase italic rounded-2xl focus:border-red-600 outline-none transition-all placeholder:text-neutral-700"
+                                                />
+                                            </div>
+                                            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                                                {['Todas', 'Elite', 'Geral', 'Linha', 'Goleiro', 'Architect', 'Bagre'].map(cat => (
+                                                    <button
+                                                        key={cat}
+                                                        onClick={() => setSelectedBadgeCategory(cat)}
+                                                        className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all border ${selectedBadgeCategory === cat ? 'bg-red-600 border-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.3)]' : 'bg-neutral-900 border-neutral-800 text-neutral-500 hover:text-white hover:border-neutral-600'}`}
+                                                    >
+                                                        {cat}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Grid de Badges */}
+                                        <div className="flex-1 overflow-y-auto p-6 grid grid-cols-2 sm:grid-cols-3 gap-3 custom-scrollbar">
+                                            {filteredBadges().map(badge => {
+                                                const isOwned = activePlayer.badges.includes(badge.id);
+                                                return (
+                                                    <button
+                                                        key={badge.id}
+                                                        onClick={() => handleGiveBadge(activePlayer.id, badge.id)}
+                                                        className={`relative p-4 rounded-2xl border transition-all text-left flex flex-col gap-2 group ${isOwned ? 'bg-red-900/10 border-red-600/40 opacity-40 grayscale pointer-events-none' : 'bg-neutral-900 border-neutral-800 hover:border-red-900/50 hover:-translate-y-1 shadow-lg'}`}
+                                                    >
+                                                        <div className="flex justify-between items-start">
+                                                            <span className="text-2xl group-hover:scale-125 transition-transform duration-500">{badge.icon.startsWith('/') ? <img src={badge.icon} className="w-8 h-8 rounded-full object-cover" /> : badge.icon}</span>
+                                                            <span className="text-[8px] font-mono font-black py-0.5 px-2 rounded-full border border-neutral-800 text-neutral-600 group-hover:border-neutral-600 group-hover:text-neutral-400">{badge.category}</span>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[10px] font-black text-white uppercase italic leading-tight mb-1">{badge.name}</p>
+                                                            <p className="text-[8px] text-neutral-600 italic line-clamp-2 leading-tight">"{badge.description}"</p>
+                                                        </div>
+                                                        {isOwned && <span className="absolute top-2 right-2 text-red-500 text-[8px] font-black">JÁ POSSUI</span>}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="p-6 border-t border-white/5 bg-neutral-900/40 flex justify-end gap-3">
+                                    <button
+                                        onClick={() => setSelectedPlayerForBadge(null)}
+                                        className="px-8 py-3 bg-white text-black font-oswald font-black uppercase italic text-sm tracking-widest hover:bg-red-600 hover:text-white transition-all rounded-xl"
+                                    >
+                                        FECHAR PORTFÓLIO
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })()
+            }
+        </div >
     );
 };
 

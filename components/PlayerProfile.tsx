@@ -735,6 +735,16 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
                   <p className="text-[9px] text-neutral-600 uppercase font-black mb-1 tracking-widest">Garçom (Assists)</p>
                   <p className="text-4xl font-oswald font-black text-white">{player.assists}</p>
                 </div>
+                <div className="bg-neutral-900/30 p-5 border border-neutral-800 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-500/5 -mr-8 -mt-8 rotate-45 transition-all group-hover:bg-emerald-500/10"></div>
+                  <p className="text-[9px] text-emerald-600 uppercase font-black mb-1 tracking-widest">Melhor da Semana</p>
+                  <p className="text-4xl font-oswald font-black text-emerald-500">{player.bestVotes}</p>
+                </div>
+                <div className="bg-neutral-900/30 p-5 border border-neutral-800 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-16 h-16 bg-red-600/5 -mr-8 -mt-8 rotate-45 transition-all group-hover:bg-red-600/10"></div>
+                  <p className="text-[9px] text-red-600 uppercase font-black mb-1 tracking-widest">Bagre da Semana</p>
+                  <p className="text-4xl font-oswald font-black text-red-500">{player.worstVotes}</p>
+                </div>
               </div>
             </div>
           </div>

@@ -29,7 +29,11 @@ const RankingItem: React.FC<RankingItemProps> = ({ player, value, index, icon, o
       <span className="font-oswald text-base text-neutral-300 group-hover:text-white uppercase tracking-tighter transition-colors">{player.nickname}</span>
     </div>
     <div className="flex items-center space-x-2">
-      <span className="font-oswald font-black text-xl text-white group-hover:text-red-500 transition-colors">{value}</span>
+      <div className="text-right flex flex-col items-end">
+        <span className="font-oswald font-black text-xl text-white group-hover:text-red-500 transition-colors leading-none">{value}</span>
+        {player.bestVotes > 0 && icon === "" && <span className="text-[7px] text-emerald-500 font-black uppercase mt-0.5">+{player.bestVotes} Melhores</span>}
+        {player.worstVotes > 0 && icon === "" && <span className="text-[7px] text-red-500 font-black uppercase mt-0.5">{player.worstVotes} Bagres</span>}
+      </div>
       <span className="text-lg opacity-80">{icon}</span>
     </div>
   </div>
@@ -37,15 +41,22 @@ const RankingItem: React.FC<RankingItemProps> = ({ player, value, index, icon, o
 
 const Rankings: React.FC<RankingsProps> = ({ players, onPlayerClick }) => {
   const [search, setSearch] = React.useState('');
+  const [showAllScorers, setShowAllScorers] = React.useState(false);
+  const [showAllAssists, setShowAllAssists] = React.useState(false);
+  const [showAllWorst, setShowAllWorst] = React.useState(false);
 
   const filteredPlayers = players.filter(p =>
     p.nickname.toLowerCase().includes(search.toLowerCase()) ||
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const topScorers = [...filteredPlayers].sort((a, b) => b.goals - a.goals).slice(0, 5);
-  const topAssists = [...filteredPlayers].sort((a, b) => b.assists - a.assists).slice(0, 5);
-  const worstOfPelada = [...filteredPlayers].sort((a, b) => b.worstVotes - a.worstVotes).slice(0, 5);
+  const allScorers = [...filteredPlayers].sort((a, b) => b.goals - a.goals);
+  const allAssists = [...filteredPlayers].sort((a, b) => b.assists - a.assists);
+  const allWorst = [...filteredPlayers].sort((a, b) => b.worstVotes - a.worstVotes);
+
+  const topScorers = showAllScorers ? allScorers : allScorers.slice(0, 5);
+  const topAssists = showAllAssists ? allAssists : allAssists.slice(0, 5);
+  const worstOfPelada = showAllWorst ? allWorst : allWorst.slice(0, 5);
 
   // Lógica para destaques (MVP e Bagre) considerando apenas dados válidos
   const bolaDeOuro = [...players].sort((a, b) => {
@@ -149,6 +160,14 @@ const Rankings: React.FC<RankingsProps> = ({ players, onPlayerClick }) => {
                 <RankingItem key={p.id} player={p} value={p.goals} index={idx} icon="" onClick={onPlayerClick} />
               ))}
             </div>
+            {allScorers.length > 5 && (
+              <button
+                onClick={() => setShowAllScorers(!showAllScorers)}
+                className="w-full mt-4 py-2 text-[10px] font-black text-neutral-600 hover:text-white uppercase tracking-widest transition-colors border border-neutral-800 rounded-xl hover:bg-neutral-800/50"
+              >
+                {showAllScorers ? 'VER MENOS' : `VER TODOS (${allScorers.length})`}
+              </button>
+            )}
           </section>
 
           {/* Garçons */}
@@ -161,6 +180,14 @@ const Rankings: React.FC<RankingsProps> = ({ players, onPlayerClick }) => {
                 <RankingItem key={p.id} player={p} value={p.assists} index={idx} icon="" onClick={onPlayerClick} />
               ))}
             </div>
+            {allAssists.length > 5 && (
+              <button
+                onClick={() => setShowAllAssists(!showAllAssists)}
+                className="w-full mt-4 py-2 text-[10px] font-black text-neutral-600 hover:text-white uppercase tracking-widest transition-colors border border-neutral-800 rounded-xl hover:bg-neutral-800/50"
+              >
+                {showAllAssists ? 'VER MENOS' : `VER TODOS (${allAssists.length})`}
+              </button>
+            )}
           </section>
 
           {/* Inimigos da Bola */}
@@ -173,6 +200,14 @@ const Rankings: React.FC<RankingsProps> = ({ players, onPlayerClick }) => {
                 <RankingItem key={p.id} player={p} value={p.worstVotes} index={idx} icon="" onClick={onPlayerClick} />
               ))}
             </div>
+            {allWorst.length > 5 && (
+              <button
+                onClick={() => setShowAllWorst(!showAllWorst)}
+                className="w-full mt-4 py-2 text-[10px] font-black text-neutral-600 hover:text-white uppercase tracking-widest transition-colors border border-neutral-800 rounded-xl hover:bg-neutral-800/50"
+              >
+                {showAllWorst ? 'VER MENOS' : `VER TODOS (${allWorst.length})`}
+              </button>
+            )}
           </section>
         </div>
       ) : (

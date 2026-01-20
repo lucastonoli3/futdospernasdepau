@@ -12,6 +12,7 @@ import PostMatchVoting from './components/PostMatchVoting';
 import PlayerProfile from './components/PlayerProfile';
 import { isLastMondayOfMonth, supabase } from './services/supabaseClient';
 import { aiService } from './services/geminiService';
+import { ADMIN_NICKNAMES } from './constants';
 
 function App() {
   const [isLogged, setIsLogged] = useState(() => {
@@ -81,7 +82,7 @@ function App() {
         heritage: p.heritage || [],
         thought: p.thought,
         is_admin: p.is_admin ||
-          ['tonoli', 'cleitim', 'markin', 'cleiton', 'marquinho', 'marquinhos'].includes(p.nickname?.toLowerCase() || ''),
+          ADMIN_NICKNAMES.includes(p.nickname?.toLowerCase() || ''),
         isPaid: p.is_paid,
         high_badges: typeof p.high_badges === 'string' ? JSON.parse(p.high_badges) : p.high_badges,
       }));
@@ -271,9 +272,20 @@ function App() {
 
       {/* MOBILE HEADER */}
       <header className="md:hidden glass-panel border-b border-neutral-800/50 p-4 sticky top-0 z-50 flex justify-between items-center h-16">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('dashboard')}>
-          <span className="text-xl">⚽</span>
-          <h1 className="font-oswald text-lg font-black uppercase italic text-red-600">FDP <span className="text-white">FUT</span></h1>
+        <div className="flex items-center gap-2">
+          {selectedPlayer ? (
+            <button
+              onClick={() => setSelectedPlayer(null)}
+              className="flex items-center gap-2 bg-gradient-to-r from-red-800 to-red-600 text-white px-4 py-2 rounded-xl font-oswald font-black uppercase italic text-xs shadow-[0_4px_15px_rgba(220,38,38,0.4)] active:scale-95 transition-all"
+            >
+              <span className="text-lg">←</span> VOLTAR
+            </button>
+          ) : (
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('dashboard')}>
+              <span className="text-xl">⚽</span>
+              <h1 className="font-oswald text-lg font-black uppercase italic text-red-600">FDP <span className="text-white">FUT</span></h1>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-3">
           {isLogged && currentUser && <NotificationCenter currentUser={currentUser} />}
@@ -300,9 +312,13 @@ function App() {
             <div className="animate-slide-up">
               <button
                 onClick={() => setSelectedPlayer(null)}
-                className="inline-flex items-center gap-2 mb-6 text-[10px] font-mono text-neutral-500 hover:text-white uppercase tracking-widest transition-colors px-2 py-1 border border-neutral-800 rounded bg-neutral-900/50"
+                className="w-full mb-8 py-4 bg-gradient-to-br from-neutral-800 to-neutral-900 border border-white/10 rounded-2xl flex items-center justify-center gap-3 group shadow-2xl hover:border-red-600/50 transition-all active:scale-[0.98]"
               >
-                <span>←</span> Voltar para {activeTab}
+                <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-white font-black group-hover:scale-110 transition-transform">←</div>
+                <div className="text-left">
+                  <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest leading-none mb-1">Cansou de ver esse aqui?</p>
+                  <p className="text-sm font-oswald font-black text-white uppercase italic tracking-tighter leading-none">VOLTAR PARA O {activeTab === 'dashboard' ? 'RANKING' : activeTab.toUpperCase()}</p>
+                </div>
               </button>
               <PlayerProfile player={selectedPlayer} currentUser={currentUser} />
             </div>

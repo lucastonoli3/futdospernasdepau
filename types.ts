@@ -16,7 +16,7 @@ export interface Badge {
   name: string;
   icon: string;
   description: string;
-  category: 'Geral' | 'Linha' | 'Goleiro' | 'Elite' | 'Honra' | 'Architect';
+  category: 'Geral' | 'Linha' | 'Goleiro' | 'Elite' | 'Honra' | 'Architect' | 'Bagre';
 }
 
 export interface HeritageItem {

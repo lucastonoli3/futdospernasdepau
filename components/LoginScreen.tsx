@@ -3,6 +3,7 @@ import { Player, Position, PlayerStatus } from '../types';
 import { aiService } from '../services/geminiService';
 import { supabase } from '../services/supabaseClient';
 import imageCompression from 'browser-image-compression';
+import { ADMIN_NICKNAMES } from '../constants';
 
 interface LoginScreenProps {
   onLogin: (player: Player) => void;
@@ -132,7 +133,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
             bestVotes: player.best_votes,
             worstVotes: player.worst_votes,
             moralScore: player.moral_score,
-            is_admin: player.is_admin || player.nickname?.toLowerCase() === 'tonoli',
+            is_admin: player.is_admin || ADMIN_NICKNAMES.includes(player.nickname?.toLowerCase() || ''),
             password: player.password
           };
           onLogin(formatted);
@@ -214,7 +215,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
           bestVotes: data.best_votes,
           worstVotes: data.worst_votes,
           moralScore: data.moral_score,
-          is_admin: data.is_admin || data.nickname?.toLowerCase() === 'tonoli',
+          is_admin: data.is_admin || ADMIN_NICKNAMES.includes(data.nickname?.toLowerCase() || ''),
           password: data.password
         });
       }

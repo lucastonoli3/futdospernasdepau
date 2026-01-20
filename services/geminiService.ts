@@ -63,7 +63,7 @@ export const aiService = {
     return response.choices[0].message.content || "";
   },
 
-  async generateTeamDrawComment(teamA: string[], teamB: string[], teamC: string[]) {
+  async generateTeamDrawComment(teamA: string[], teamB: string[], teamC: string[], teamD?: string[]) {
     const openai = getOpenAIClient();
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -74,6 +74,7 @@ export const aiService = {
           Bonde A: ${teamA.join(', ')}
           Bonde B: ${teamB.join(', ')}
           Bonde C: ${teamC.join(', ')}
+          ${teamD ? `Bonde D: ${teamD.join(', ')}` : ''}
           Fale qual time vai dar W.O. por overdose, qual vai brigar e qual é horrível.` }
       ]
     });
