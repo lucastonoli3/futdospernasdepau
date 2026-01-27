@@ -39,8 +39,9 @@ const PostMatchVoting: React.FC<PostMatchVotingProps> = ({ players, currentUser,
             return;
         }
 
+        const currentStatus = (currentSession.status || '').toLowerCase().trim();
         const votingPossibleStatuses = ['partida', 'votacao_aberta', 'em_jogo', 'finalizado'];
-        const canVoteByStatus = votingPossibleStatuses.includes(currentSession.status);
+        const canVoteByStatus = votingPossibleStatuses.includes(currentStatus);
 
         if (!canVoteByStatus) {
             setIsLocked(true);
