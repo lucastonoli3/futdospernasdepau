@@ -103,7 +103,7 @@ function App() {
       const matchDay = data.match_day ?? 1; // Segunda-feira
       const manualStatus = data.manual_voting_status || 'auto';
 
-      let isVotingOpen = false;
+      let isVotingOpen = data.status === 'votacao_aberta';
 
       if (manualStatus === 'open') {
         isVotingOpen = true;
@@ -113,7 +113,7 @@ function App() {
         // MODO AUTO: Abre Segunda-feira (1) entre 21:00 e 23:59
         const isMonday = currentDay === 1;
         const isTimeMatch = currentHour >= 21 && currentHour <= 23;
-        isVotingOpen = isMonday && isTimeMatch;
+        isVotingOpen = isVotingOpen || (isMonday && isTimeMatch);
       }
 
       // Se o status calculado for diferente do banco e for AUTO, atualizamos (opcional para consistência visual)
@@ -123,6 +123,7 @@ function App() {
         status: data.status as any,
         playersPresent: data.players_present || [],
         votingOpen: isVotingOpen,
+        matchDay: data.match_day,
         manualVotingStatus: data.manual_voting_status
       });
     }
