@@ -104,7 +104,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ players, currentSession, financ
 
     const handleToggleVoting = () => {
         if (!currentSession) return;
-        updateSession({ votingOpen: !currentSession.votingOpen });
+        const nextStatus = currentSession.manualVotingStatus === 'open' ? 'closed' : 'open';
+        updateSession({ manualVotingStatus: nextStatus });
     };
 
     const handleUpdateStatus = (status: MatchSession['status']) => {

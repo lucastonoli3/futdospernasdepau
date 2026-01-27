@@ -21,17 +21,28 @@ const PostMatchVoting: React.FC<PostMatchVotingProps> = ({ players, currentUser,
     const [countdownLabel, setCountdownLabel] = useState("");
 
     useEffect(() => {
+        // Inicializa o estado imediatamente para evitar piscar tela de fechado
+        updateCountdown();
         const timer = setInterval(updateCountdown, 1000);
         return () => clearInterval(timer);
-    }, [currentSession.status]);
+    }, [currentSession.status, currentSession.votingOpen]);
 
     const updateCountdown = () => {
         const now = new Date();
         const matchDay = currentSession.matchDay ?? 1;
-        const lockDay = (matchDay + 1) % 7; // Fecha no dia seguinte à pelada
 
-        // Se a pelada ainda não acabou, mostramos o cronômetro para o JOGO (20:15)
-        if (currentSession.status !== 'finalizado') {
+        // PRIORIDADE MÁXIMA: Se o servidor diz que a votação está aberta, ABRA.
+        if (currentSession.votingOpen) {
+            setIsLocked(false);
+            setCountdownLabel("VOTAÇÃO LIBERADA");
+            setTimeLeft("VOTE AGORA!");
+            return;
+        }
+
+        const votingPossibleStatuses = ['partida', 'votacao_aberta', 'em_jogo', 'finalizado'];
+        const canVoteByStatus = votingPossibleStatuses.includes(currentSession.status);
+
+        if (!canVoteByStatus) {
             setIsLocked(true);
             setCountdownLabel("Início da Partida (20:15)");
 
@@ -40,31 +51,24 @@ const PostMatchVoting: React.FC<PostMatchVotingProps> = ({ players, currentUser,
             target.setDate(now.getDate() + daysToMatch);
             target.setHours(20, 15, 0, 0);
 
-            // Se hoje é o dia da pelada e já passou das 20:15, mas o status não é finalizado,
-            // pode ser que a live ainda esteja rolando.
             const diff = target.getTime() - now.getTime();
             formatTime(diff > 0 ? diff : 0);
         } else {
-            // Se a pelada ACABOU, mostramos o tempo para votar (até o dia seguinte 23:59)
             setCountdownLabel("Urnas fecham em:");
 
-            // Se for o dia seguinte (lockDay), as urnas fecham à meia-noite (início do dia após lockDay)
-            // Na verdade, vamos dar o dia seguinte inteiro para votar.
-            const isLockDayOver = now.getDay() === (lockDay + 1) % 7;
-
-            if (isLockDayOver) {
-                setIsLocked(true);
-            } else {
-                setIsLocked(false);
-            }
-
             const deadline = new Date();
-            const daysToLock = (lockDay - now.getDay() + 7) % 7 || 7;
-            deadline.setDate(now.getDate() + daysToLock + 1); // Fim do dia seguinte
-            deadline.setHours(0, 0, 0, 0);
+            const daysToMatch = (matchDay - now.getDay() - 7) % 7;
+            deadline.setDate(now.getDate() + daysToMatch + 4);
+            deadline.setHours(23, 59, 59, 999);
 
             const diff = deadline.getTime() - now.getTime();
-            formatTime(diff > 0 ? diff : 0);
+            if (diff <= 0) {
+                setIsLocked(true);
+                formatTime(0);
+            } else {
+                setIsLocked(false);
+                formatTime(diff);
+            }
         }
     };
 
@@ -114,7 +118,18 @@ const PostMatchVoting: React.FC<PostMatchVotingProps> = ({ players, currentUser,
 
     const checkVoteStatus = async () => {
         try {
-            const matchId = new Date().toISOString().split('T')[0];
+            // Match ID baseado na última segunda-feira LOCAL
+            const now = new Date();
+            const matchDay = currentSession.matchDay ?? 1;
+            const lastMatch = new Date(now);
+            const diff = (now.getDay() - matchDay + 7) % 7;
+            lastMatch.setDate(now.getDate() - diff);
+
+            const year = lastMatch.getFullYear();
+            const month = String(lastMatch.getMonth() + 1).padStart(2, '0');
+            const day = String(lastMatch.getDate()).padStart(2, '0');
+            const matchId = `${year}-${month}-${day}`;
+
             const { data, error } = await supabase
                 .from('votes')
                 .select('id')

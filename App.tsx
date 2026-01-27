@@ -151,8 +151,19 @@ function App() {
     if (!currentUser) return;
 
     try {
-      // 1. Registrar Voto
-      const matchId = new Date().toISOString().split('T')[0];
+      // Unificar lógica de Match ID: Sempre a última segunda-feira RELATIVA AO DIA LOCAL
+      const now = new Date();
+      const matchDay = currentSession?.match_day ?? 1;
+      const lastMatch = new Date(now);
+      const diff = (now.getDay() - matchDay + 7) % 7;
+      lastMatch.setDate(now.getDate() - diff);
+
+      // Gerar string de data LOCAL (YYYY-MM-DD)
+      const year = lastMatch.getFullYear();
+      const month = String(lastMatch.getMonth() + 1).padStart(2, '0');
+      const day = String(lastMatch.getDate()).padStart(2, '0');
+      const matchId = `${year}-${month}-${day}`;
+
       const { error: vError } = await supabase.from('votes').insert([{
         voter_nickname: currentUser.nickname,
         match_id: matchId,

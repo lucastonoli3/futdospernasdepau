@@ -355,6 +355,17 @@ const MatchControl: React.FC<MatchControlProps> = ({ players, currentUser }) => 
             <div className="space-y-4">
               <div>
                 <label className="text-[10px] text-neutral-500 uppercase font-black px-1">Quem mandou pro fundo?</label>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {(teams![showGoalModal.side === 'left' ? activeTeams.left : activeTeams.right] || []).map(p => (
+                    <button
+                      key={p.id}
+                      onClick={() => setGoalScorer(p)}
+                      className={`px-3 py-2 rounded-xl font-oswald text-[10px] uppercase italic border transition-all ${goalScorer?.id === p.id ? 'bg-red-600 text-white border-red-600' : 'bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-600'}`}
+                    >
+                      {p.nickname}
+                    </button>
+                  ))}
+                </div>
                 <select
                   className="w-full bg-black border border-neutral-800 p-4 text-white font-oswald uppercase italic rounded-2xl outline-none focus:border-red-600 appearance-none shadow-inner"
                   onChange={(e) => {
@@ -370,6 +381,23 @@ const MatchControl: React.FC<MatchControlProps> = ({ players, currentUser }) => 
 
               <div>
                 <label className="text-[10px] text-neutral-500 uppercase font-black px-1 text-neutral-700">Assistência (Opcional)</label>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {(teams![showGoalModal.side === 'left' ? activeTeams.left : activeTeams.right] || []).filter(p => p.id !== goalScorer?.id).map(p => (
+                    <button
+                      key={p.id}
+                      onClick={() => setGoalAssistant(p)}
+                      className={`px-3 py-2 rounded-xl font-oswald text-[10px] uppercase italic border transition-all ${goalAssistant?.id === p.id ? 'bg-red-600 text-white border-red-600' : 'bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-600'}`}
+                    >
+                      {p.nickname}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setGoalAssistant(null)}
+                    className={`px-3 py-2 rounded-xl font-oswald text-[10px] uppercase italic border transition-all ${!goalAssistant ? 'bg-neutral-700 text-white border-neutral-600' : 'bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-600'}`}
+                  >
+                    NENHUMA
+                  </button>
+                </div>
                 <select
                   className="w-full bg-black border border-neutral-800 p-4 text-white font-oswald uppercase italic rounded-2xl outline-none focus:border-red-600 opacity-60 appearance-none shadow-inner"
                   onChange={(e) => {
@@ -400,6 +428,17 @@ const MatchControl: React.FC<MatchControlProps> = ({ players, currentUser }) => 
             <div className="space-y-4">
               <div>
                 <label className="text-[10px] text-neutral-500 uppercase font-black px-1">Autor do Vexame</label>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {[activeTeams.left, activeTeams.right].flatMap(t => teams![t!] || []).map(p => (
+                    <button
+                      key={p.id}
+                      onClick={() => setAggressor(p)}
+                      className={`px-3 py-2 rounded-xl font-oswald text-[10px] uppercase italic border transition-all ${aggressor?.id === p.id ? 'bg-red-600 text-white border-red-600' : 'bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-600'}`}
+                    >
+                      {p.nickname}
+                    </button>
+                  ))}
+                </div>
                 <select
                   className="w-full bg-black border border-neutral-800 p-4 text-white font-oswald uppercase italic rounded-2xl outline-none focus:border-red-600 appearance-none shadow-inner"
                   onChange={(e) => setAggressor(players.find(p => p.id === e.target.value) || null)}
@@ -416,6 +455,17 @@ const MatchControl: React.FC<MatchControlProps> = ({ players, currentUser }) => 
 
               <div>
                 <label className="text-[10px] text-neutral-500 uppercase font-black px-1">Vítima do Crime</label>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {[activeTeams.left, activeTeams.right].flatMap(t => teams![t!] || []).filter(p => p.id !== aggressor?.id).map(p => (
+                    <button
+                      key={p.id}
+                      onClick={() => setVictim(p)}
+                      className={`px-3 py-2 rounded-xl font-oswald text-[10px] uppercase italic border transition-all ${victim?.id === p.id ? 'bg-red-600 text-white border-red-600' : 'bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-600'}`}
+                    >
+                      {p.nickname}
+                    </button>
+                  ))}
+                </div>
                 <select
                   className="w-full bg-black border border-neutral-800 p-4 text-white font-oswald uppercase italic rounded-2xl outline-none focus:border-red-600 appearance-none shadow-inner"
                   onChange={(e) => setVictim(players.find(p => p.id === e.target.value) || null)}
