@@ -10,18 +10,14 @@ import AdminPanel from './components/AdminPanel';
 import Caixinha from './components/Caixinha';
 import PostMatchVoting from './components/PostMatchVoting';
 import PlayerProfile from './components/PlayerProfile';
-import { isLastMondayOfMonth, supabase } from './services/supabaseClient';
-import { aiService } from './services/geminiService';
+import { supabase } from './services/supabaseClient';
 import { ADMIN_NICKNAMES } from './constants';
 
 function App() {
   const [isLogged, setIsLogged] = useState(() => {
     return localStorage.getItem('fdp_is_logged') === 'true';
   });
-  const [currentUser, setCurrentUser] = useState<Player | null>(() => {
-    const saved = localStorage.getItem('fdp_user');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [currentUser, setCurrentUser] = useState<Player | null>(null);
   const [allPlayers, setAllPlayers] = useState<Player[]>([]);
   const [currentSession, setCurrentSession] = useState<MatchSession | null>(null);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'partida' | 'resenha' | 'admin' | 'financeiro' | 'votacao'>(() => {
@@ -30,6 +26,9 @@ function App() {
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [finances, setFinances] = useState<GlobalFinances | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isTrainingMode, setIsTrainingMode] = useState(false);
+  const [trainingConfirmedIds, setTrainingConfirmedIds] = useState<string[]>([]);
+  const [loadError, setLoadError] = useState(false);
 
   // 1. Carregar Dados do Supabase
   useEffect(() => {
@@ -69,81 +68,163 @@ function App() {
   }, [activeTab]);
 
   const fetchPlayers = async () => {
-    const { data, error } = await supabase.from('players').select('*');
-    if (data) {
-      const formatted = data.map(p => ({
-        ...p,
-        badges: typeof p.badges === 'string' ? JSON.parse(p.badges) : p.badges,
-        matchesPlayed: p.matches_played,
-        bestVotes: p.best_votes,
-        worstVotes: p.worst_votes,
-        moralScore: p.moral_score,
-        specialEvents: p.special_events || [],
-        heritage: p.heritage || [],
-        thought: p.thought,
-        is_admin: p.is_admin ||
-          ADMIN_NICKNAMES.includes(p.nickname?.toLowerCase() || ''),
-        isPaid: p.is_paid,
-        high_badges: typeof p.high_badges === 'string' ? JSON.parse(p.high_badges) : p.high_badges,
-      }));
-      const filtered = formatted.filter(p => p.nickname !== 'AdminVantablack');
-      setAllPlayers(filtered);
+    try {
+      const { data, error } = await supabase.from('players').select('*');
+      if (error) throw error;
+      if (data) {
+        const formatted = data.map(p => ({
+          ...p,
+          badges: (() => {
+            try {
+              return typeof p.badges === 'string' ? JSON.parse(p.badges) : (p.badges || []);
+            } catch (e) { return []; }
+          })(),
+          matchesPlayed: p.matches_played,
+          bestVotes: p.best_votes,
+          worstVotes: p.worst_votes,
+          moralScore: p.moral_score,
+          specialEvents: p.special_events || [],
+          heritage: p.heritage || [],
+          thought: p.thought,
+          is_admin: p.is_admin ||
+            ADMIN_NICKNAMES.includes(p.nickname?.toLowerCase() || ''),
+          photo: p.photo,
+          isPaid: p.is_paid,
+          high_badges: (() => {
+            try {
+              return typeof p.high_badges === 'string' ? JSON.parse(p.high_badges) : (p.high_badges || []);
+            } catch (e) { return []; }
+          })(),
+        }));
+        const filtered = formatted.filter(p => p.nickname !== 'AdminVantablack');
+        setAllPlayers(filtered);
+      }
+    } catch (err) {
+      console.error("ERRO AO CARREGAR JOGADORES:", err);
     }
   };
 
   const fetchCurrentSession = async () => {
-    const { data, error } = await supabase.from('sessions').select('*').eq('id', 1).single();
-    if (data) {
-      // Lógica de Votagem Automática
-      const now = new Date();
-      const currentDay = now.getDay(); // 0-6 (Dom-Sab)
-      const currentHour = now.getHours();
-      const currentMinute = now.getMinutes();
+    try {
+      const { data, error } = await supabase.from('sessions').select('*').eq('id', 1).maybeSingle();
+      if (error) throw error;
+      if (data) {
+        // Lógica de Votagem Automática
+        const now = new Date();
+        const currentDay = now.getDay(); // 0-6 (Dom-Sab)
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
 
-      const matchDay = data.match_day ?? 1; // Segunda-feira
-      const manualStatus = data.manual_voting_status || 'auto';
+        const matchDay = data.match_day ?? 1; // Segunda-feira
+        const manualStatus = data.manual_voting_status || 'auto';
 
-      let isVotingOpen = data.status === 'votacao_aberta';
+        let isVotingOpen = data.status === 'votacao_aberta';
 
-      if (manualStatus === 'open') {
-        isVotingOpen = true;
-      } else if (manualStatus === 'closed') {
-        isVotingOpen = false;
+        if (manualStatus === 'open') {
+          isVotingOpen = true;
+        } else if (manualStatus === 'closed') {
+          isVotingOpen = false;
+        } else {
+          // MODO AUTO: Abre Segunda-feira (1) entre 21:00 e 23:59
+          const isMonday = currentDay === 1;
+          const isTimeMatch = currentHour >= 21 && currentHour <= 23;
+          isVotingOpen = isVotingOpen || (isMonday && isTimeMatch);
+        }
+
+        setCurrentSession({
+          ...data,
+          status: data.status as any,
+          playersPresent: data.players_present || [],
+          votingOpen: isVotingOpen,
+          matchDay: data.match_day,
+          manualVotingStatus: data.manual_voting_status
+        });
       } else {
-        // MODO AUTO: Abre Segunda-feira (1) entre 21:00 e 23:59
-        const isMonday = currentDay === 1;
-        const isTimeMatch = currentHour >= 21 && currentHour <= 23;
-        isVotingOpen = isVotingOpen || (isMonday && isTimeMatch);
+        console.warn("SESSÃO ID 1 NÃO ENCONTRADA NO BANCO");
       }
-
-      // Se o status calculado for diferente do banco e for AUTO, atualizamos (opcional para consistência visual)
-
-      setCurrentSession({
-        ...data,
-        status: data.status as any,
-        playersPresent: data.players_present || [],
-        votingOpen: isVotingOpen,
-        matchDay: data.match_day,
-        manualVotingStatus: data.manual_voting_status
-      });
+    } catch (err) {
+      console.error("ERRO AO CARREGAR SESSÃO:", err);
     }
   };
 
   const fetchFinances = async () => {
-    const { data, error } = await supabase.from('finances').select('*').eq('id', 1).single();
-    if (data) setFinances(data);
+    try {
+      const { data, error } = await supabase.from('finances').select('*').eq('id', 1).single();
+      if (error) throw error;
+      if (data) setFinances(data);
+    } catch (err) {
+      console.error("ERRO AO CARREGAR FINANÇAS:", err);
+    }
   };
 
-  // Carregamento inicial unificado
+  // 3. Restaurar Sessão Unificado
   useEffect(() => {
     const loadAll = async () => {
       setIsLoading(true);
-      await Promise.all([
-        fetchPlayers(),
-        fetchCurrentSession(),
-        fetchFinances()
-      ]);
-      setIsLoading(false);
+      setLoadError(false);
+
+      // Safety timeout: se após 8s ainda não carregou, desbloqueia o app
+      const safetyTimeout = setTimeout(() => {
+        console.error('TIMEOUT: load demorou +8s. Forçando recovery...');
+        handleLogout();
+        setIsLoading(false);
+      }, 8000);
+
+      try {
+        // 1. Carregar dados básicos
+        await Promise.allSettled([
+          fetchPlayers(),
+          fetchCurrentSession(),
+          fetchFinances()
+        ]);
+
+        // 2. Tentar restaurar usuário se estiver marcado como logado
+        const savedIsLogged = localStorage.getItem('fdp_is_logged') === 'true';
+        const savedUserId = localStorage.getItem('fdp_user');
+
+        if (savedIsLogged && savedUserId) {
+          const { data: userData, error: userError } = await supabase
+            .from('players')
+            .select('*')
+            .eq('id', savedUserId)
+            .maybeSingle();
+
+          if (userData && !userError) {
+            const formatted = {
+              ...userData,
+              badges: (() => {
+                try {
+                  return typeof userData.badges === 'string' ? JSON.parse(userData.badges) : (userData.badges || []);
+                } catch (e) { return []; }
+              })(),
+              matchesPlayed: userData.matches_played,
+              bestVotes: userData.best_votes,
+              worstVotes: userData.worst_votes,
+              moralScore: userData.moral_score,
+              is_admin: userData.is_admin || ADMIN_NICKNAMES.includes(userData.nickname?.toLowerCase() || ''),
+              photo: userData.photo,
+              isPaid: userData.is_paid,
+              high_badges: (() => {
+                try {
+                  return typeof userData.high_badges === 'string' ? JSON.parse(userData.high_badges) : (userData.high_badges || []);
+                } catch (e) { return []; }
+              })(),
+            };
+            setCurrentUser(formatted);
+            setIsLogged(true);
+          } else {
+            // Usuário não encontrado no banco — limpa sessão corrompida
+            handleLogout();
+          }
+        }
+      } catch (err) {
+        console.error('ERRO NO LOAD_ALL:', err);
+        setLoadError(true);
+        handleLogout(); // Garante que o app não fique preso
+      } finally {
+        clearTimeout(safetyTimeout);
+        setIsLoading(false);
+      }
     };
     loadAll();
   }, []);
@@ -206,7 +287,7 @@ function App() {
   const handleLogin = (player: Player) => {
     setCurrentUser(player);
     setIsLogged(true);
-    localStorage.setItem('fdp_user', JSON.stringify(player));
+    localStorage.setItem('fdp_user', player.id); // Guardar apenas o ID para consistência
     localStorage.setItem('fdp_is_logged', 'true');
   };
 
@@ -219,11 +300,19 @@ function App() {
     localStorage.removeItem('fdp_active_tab');
   };
 
+  // Só sai da tela de carregamento quando os dados e a sessão (se logado) estiverem prontos
   if (isLoading) {
     return (
       <div className="fixed inset-0 bg-black z-[1000] flex flex-col items-center justify-center">
         <div className="w-16 h-16 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="font-oswald text-white uppercase italic tracking-[0.4em] animate-pulse">Iniciando Protocolo Vantablack...</p>
+        <p className="font-oswald text-white uppercase italic tracking-[0.4em] animate-pulse">
+          Iniciando Protocolo Vantablack...
+        </p>
+        {loadError && (
+          <p className="mt-4 text-red-500 font-mono text-xs uppercase tracking-widest">
+            Erro de conexão. Recarregando...
+          </p>
+        )}
       </div>
     );
   }
@@ -352,21 +441,22 @@ function App() {
                 </div>
               ) : (
                 <div key={activeTab} className="animate-slide-up pt-4">
-                  {activeTab === 'dashboard' && (
-                    <div className="space-y-6">
-                      <div className="mb-8">
-                        <h2 className="section-title text-3xl md:text-5xl mb-2">Mural do <span className="text-red-600">Orgulho</span></h2>
-                        <p className="text-neutral-500 font-mono text-[9px] md:text-xs uppercase tracking-[0.4em]">Temporada Pro • Live Status</p>
-                      </div>
-                      <Rankings players={allPlayers} onPlayerClick={setSelectedPlayer} />
-                    </div>
+                  {/* Dashboard rendered above for non-logged users as well */}
+                  {activeTab === 'partida' && currentUser && (
+                    <MatchControl
+                      players={allPlayers}
+                      currentUser={currentUser}
+                      currentSession={currentSession}
+                      isTrainingMode={isTrainingMode}
+                      trainingConfirmedIds={trainingConfirmedIds}
+                      setTrainingConfirmedIds={setTrainingConfirmedIds}
+                    />
                   )}
-                  {activeTab === 'partida' && currentSession && <MatchControl players={allPlayers} currentUser={currentUser!} currentSession={currentSession} />}
-                  {activeTab === 'resenha' && <ChatResenha currentUser={currentUser!} allPlayers={allPlayers} />}
-                  {activeTab === 'financeiro' && <Caixinha players={allPlayers} finances={finances!} currentUser={currentUser!} />}
-                  {activeTab === 'votacao' && <PostMatchVoting players={allPlayers} onSubmit={handleApplyVotes} currentUser={currentUser!} currentSession={currentSession!} />}
-                  {activeTab === 'admin' && (
-                    currentUser?.is_admin ? (
+                  {activeTab === 'resenha' && currentUser && <ChatResenha currentUser={currentUser} allPlayers={allPlayers} />}
+                  {activeTab === 'financeiro' && currentUser && <Caixinha players={allPlayers} finances={finances} currentUser={currentUser} />}
+                  {activeTab === 'votacao' && currentUser && <PostMatchVoting players={allPlayers} onSubmit={handleApplyVotes} currentUser={currentUser} currentSession={currentSession} />}
+                  {activeTab === 'admin' && currentUser && (
+                    currentUser.is_admin ? (
                       <AdminPanel
                         players={allPlayers}
                         currentSession={currentSession!}
@@ -374,6 +464,9 @@ function App() {
                         onUpdateFinances={fetchFinances}
                         onUpdatePlayer={fetchPlayers}
                         onUpdateSession={fetchCurrentSession}
+                        isTrainingMode={isTrainingMode}
+                        setIsTrainingMode={setIsTrainingMode}
+                        setTrainingConfirmedIds={setTrainingConfirmedIds}
                       />
                     ) : (
                       <div className="flex flex-col items-center justify-center p-20 text-center space-y-6 glass-panel border-red-900/30 rounded-3xl mt-12">
