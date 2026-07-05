@@ -1,0 +1,56 @@
+[
+  {
+    "nickname": "Guu",
+    "goals": 6,
+    "assists": 2,
+    "badges": "[\"leg4\",\"def10\",\"pres16\",\"g1a\",\"pres1\",\"gl1a\"]"
+  },
+  {
+    "nickname": "luizhenrique",
+    "goals": 9,
+    "assists": 0,
+    "badges": "[\"bg_v54\",\"g1a\",\"pres1\"]"
+  },
+  {
+    "nickname": "Jv",
+    "goals": 4,
+    "assists": 0,
+    "badges": "[\"leg4\",\"bg_v5\",\"bg_v59\",\"g1a\",\"pres1\"]"
+  },
+  {
+    "nickname": "WC",
+    "goals": 7,
+    "assists": 2,
+    "badges": "[\"gl1b\",\"g1a\",\"pres1\",\"vt_ch1\",\"atk5\"]"
+  },
+  {
+    "nickname": "Celsin",
+    "goals": 5,
+    "assists": 1,
+    "badges": "[\"rc9\",\"g1a\",\"pres1\",\"atk5\"]"
+  },
+  {
+    "nickname": "L.C",
+    "goals": 1,
+    "assists": 3,
+    "badges": "[\"bg8\",\"def4\",\"def7\",\"g1a\",\"pres1\",\"mg3\"]"
+  },
+  {
+    "nickname": "Ptk",
+    "goals": 4,
+    "assists": 3,
+    "badges": "[\"atk11\",\"atk25\",\"exx5\",\"g1a\",\"pres1\",\"atk20\"]"
+  },
+  {
+    "nickname": "Mr",
+    "goals": 6,
+    "assists": 1,
+    "badges": "[\"mr_badge_rodada_0902\",\"bg10\",\"atk7\",\"bh12\"]"
+  },
+  {
+    "nickname": "Tonoli",
+    "goals": 2,
+    "assists": 6,
+    "badges": "[\"vb3\",\"pres21\",\"pres31\",\"dev1\",\"gl9\",\"leg2\",\"g1a\",\"pres1\",\"mg8\"]"
+  }
+]

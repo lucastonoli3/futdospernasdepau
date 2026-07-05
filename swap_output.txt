@@ -1,0 +1,41 @@
+=== LISTA ANTES ===
+  01. Guu
+  02. WC
+  03. Mr
+  04. max
+  05. Ml
+  06. Cleitim
+  07. Semente
+  08. PH 22
+  09. Markin
+  10. luizhenrique
+  11. PH
+  12. Brow
+  13. Ptk
+  14. L.C
+  15. Tonoli
+  16. Jv
+
+✅ SWAP 1: JV agora é TITULAR (pos 7), Semente agora é SUPLENTE (pos 16)
+✅ SWAP 2: Jota goleiro entrou na TITULAR (pos 8), PH 22 foi pro final da lista (suplente, pos 17)
+
+=== LISTA DEPOIS ===
+  ⚽ 01. Guu
+  ⚽ 02. WC
+  ⚽ 03. Mr
+  ⚽ 04. max
+  ⚽ 05. Ml
+  ⚽ 06. Cleitim
+  ⚽ 07. Jv
+  ⚽ 08. Jota goleiro
+  ⚽ 09. Markin
+  ⚽ 10. luizhenrique
+  ⚽ 11. PH
+  ⚽ 12. Brow
+  ⚽ 13. Ptk
+  ⚽ 14. L.C
+  ⚽ 15. Tonoli
+  🪑 16. Semente
+  🪑 17. PH 22
+
+🔥 LISTA ATUALIZADA COM SUCESSO NO SUPABASE!

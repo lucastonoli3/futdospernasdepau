@@ -1,0 +1,114 @@
+[
+  {
+    "table": "finances",
+    "found": false,
+    "error": "Could not find the table 'public.finances' in the schema cache",
+    "data": null
+  },
+  {
+    "table": "sessions",
+    "found": true,
+    "error": null,
+    "data": [
+      {
+        "id": 1,
+        "status": "em_jogo",
+        "voting_open": true,
+        "session_date": "2026-01-12 16:32:31.268644+00",
+        "updated_at": "2026-01-12T16:32:31.268644+00:00",
+        "match_day": 1,
+        "manual_voting_status": "closed",
+        "players_present": [
+          "5c2099dd-fc10-4fdc-9dcc-72216decc17e",
+          "d9344c3b-2728-4e0f-8bf3-fec27b73c516",
+          "188b8623-3ea7-4c4c-9b5a-43aad55d8198",
+          "14330fae-4d33-470e-ab00-9bd9acf42564",
+          "cecb5794-259a-4334-86a9-621905820d04",
+          "e87ed5eb-af93-4a84-aab9-2cc0e6187da6",
+          "e49d9b8e-3451-49da-b496-c2bb797799e7",
+          "112b2bc1-eef6-4ec6-b5e8-90f243e3b271",
+          "1cd4d857-b544-407b-81b0-3540ec14c758",
+          "bf5b30dc-3630-44cf-87b5-50fba3be3822",
+          "6a4895b8-3c03-4f6d-923c-4785b869ca0b",
+          "b9e0ce08-d2a5-40a9-ba0a-384f21f36992",
+          "21b47f15-8e6f-429d-a85c-61b1d73e8de7",
+          "28465778-2f53-43c8-98ee-471506dbc3eb",
+          "22f6af3a-e779-4b8a-bd2e-d8c026903094",
+          "e54fa23d-158e-46f0-8b8a-25431bc43535"
+        ]
+      }
+    ]
+  },
+  {
+    "table": "players",
+    "found": true,
+    "error": null,
+    "data": [
+      {
+        "id": "14330fae-4d33-470e-ab00-9bd9acf42564",
+        "name": "P H",
+        "nickname": "PH",
+        "photo": "/no_photo.jpg",
+        "position": "Linha",
+        "matches_played": 0,
+        "goals": 2,
+        "assists": 0,
+        "best_votes": 0,
+        "worst_votes": 0,
+        "moral_score": 104,
+        "status": "😐 Normal",
+        "badges": "[\"b1\"]",
+        "debt": 0,
+        "is_paid": true,
+        "invited_by": "Markin",
+        "created_at": "2026-01-14T19:22:02.44162+00:00",
+        "password": "2310",
+        "thought": null,
+        "high_badges": [],
+        "ai_dossier": "O Ponto Zero. PH está no equilíbrio dos deuses. O Pelé da várzea em dias de lucidez.",
+        "last_ai_update": "2026-01-14T19:25:35.901+00:00"
+      }
+    ]
+  },
+  {
+    "table": "humiliations",
+    "found": true,
+    "error": null,
+    "data": [
+      {
+        "id": "806ed843-8f65-4413-b7c9-41f924f86768",
+        "performer_id": "e87ed5eb-af93-4a84-aab9-2cc0e6187da6",
+        "victim_id": "6a4895b8-3c03-4f6d-923c-4785b869ca0b",
+        "type": "chapeu",
+        "status": "confirmed",
+        "created_at": "2026-01-27T12:26:08.016306+00:00",
+        "description": "Chapéu lindo nem viu a cor da bola ",
+        "badge_id": null
+      }
+    ]
+  },
+  {
+    "table": "heritage",
+    "found": true,
+    "error": null,
+    "data": [
+      {
+        "id": "51f26c2e-696f-47a2-80d4-d0c37f3e4616",
+        "player_id": "d9344c3b-2728-4e0f-8bf3-fec27b73c516",
+        "photo": "https://dtdolegbbcquqiflkiww.supabase.co/storage/v1/object/public/player_assets/heritage/d9344c3b-2728-4e0f-8bf3-fec27b73c516/1768259047413.jpg",
+        "title": "Campeonato Society Itapemirim ",
+        "description": null,
+        "date": "2026-01-12",
+        "created_at": "2026-01-12T23:04:08.552757+00:00",
+        "type": "album",
+        "tagged_players": []
+      }
+    ]
+  },
+  {
+    "table": "chats",
+    "found": false,
+    "error": "Could not find the table 'public.chats' in the schema cache",
+    "data": null
+  }
+]

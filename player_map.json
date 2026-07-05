@@ -1,0 +1,80 @@
+[
+  {
+    "id": "1cd4d857-b544-407b-81b0-3540ec14c758",
+    "nickname": "Jv",
+    "goals": 3,
+    "assists": 0,
+    "moral_score": 100,
+    "badges": [
+      "b1",
+      "leg4",
+      "bg_v5",
+      "bg_v59",
+      "g1a",
+      "pres1"
+    ]
+  },
+  {
+    "id": "b9e0ce08-d2a5-40a9-ba0a-384f21f36992",
+    "nickname": "Ptk",
+    "goals": 4,
+    "assists": 1,
+    "moral_score": 101,
+    "badges": [
+      "b1",
+      "atk11",
+      "atk25",
+      "exx5",
+      "g1a",
+      "a1",
+      "pres1"
+    ]
+  },
+  {
+    "id": "cecb5794-259a-4334-86a9-621905820d04",
+    "nickname": "Brow",
+    "goals": 3,
+    "assists": 0,
+    "moral_score": 102,
+    "badges": [
+      "b1",
+      "b9",
+      "teg1",
+      "sp_unique_brow",
+      "gl15",
+      "vt_cn1",
+      "gl18",
+      "g1a",
+      "pres1"
+    ]
+  },
+  {
+    "id": "112b2bc1-eef6-4ec6-b5e8-90f243e3b271",
+    "nickname": "Celsin",
+    "goals": 2,
+    "assists": 1,
+    "moral_score": 101,
+    "badges": [
+      "b1",
+      "rc9",
+      "b8",
+      "b4",
+      "g1a",
+      "pres1"
+    ]
+  },
+  {
+    "id": "6a4895b8-3c03-4f6d-923c-4785b869ca0b",
+    "nickname": "WC",
+    "goals": 4,
+    "assists": 2,
+    "moral_score": 116,
+    "badges": [
+      "b1",
+      "gl1b",
+      "g1a",
+      "pres1",
+      "vt_ch1"
+    ]
+  }
+]

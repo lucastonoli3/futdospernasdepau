@@ -1,0 +1,11 @@
+Celsin          G:13 A:6 M:142
+Cleitim         G:5 A:2 M:99
+Guu             G:9 A:2 M:139
+Jota goleiro    G:1 A:0 M:102
+Jv              G:8 A:1 M:116
+max             G:4 A:0 M:94
+Ml              G:8 A:1 M:113
+PH              G:3 A:3 M:94
+Semente         G:5 A:1 M:121
+Tonoli          G:8 A:8 M:157
+WC              G:10 A:2 M:142

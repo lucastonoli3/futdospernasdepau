@@ -1,0 +1,290 @@
+[
+  {
+    "nickname": "PH",
+    "name": "P H",
+    "goals": 2,
+    "assists": 0,
+    "moral_score": 104,
+    "badges": "[\"b1\"]",
+    "thought": null
+  },
+  {
+    "nickname": "MD",
+    "name": "Marcos Davi ",
+    "goals": 0,
+    "assists": 0,
+    "moral_score": 100,
+    "badges": "[\"b1\"]",
+    "thought": null
+  },
+  {
+    "nickname": "TH",
+    "name": "Thyago",
+    "goals": 0,
+    "assists": 0,
+    "moral_score": 100,
+    "badges": "[\"b1\"]",
+    "thought": null
+  },
+  {
+    "nickname": "Bené",
+    "name": "Eduardo ",
+    "goals": 0,
+    "assists": 0,
+    "moral_score": 100,
+    "badges": "[\"b1\"]",
+    "thought": null
+  },
+  {
+    "nickname": "Queixada",
+    "name": "Hailton",
+    "goals": 0,
+    "assists": 0,
+    "moral_score": 100,
+    "badges": "[\"b1\"]",
+    "thought": null
+  },
+  {
+    "nickname": "Masse",
+    "name": "Adriano Masse",
+    "goals": 0,
+    "assists": 0,
+    "moral_score": 100,
+    "badges": "[\"b1\"]",
+    "thought": "Quem petisca não arrisca "
+  },
+  {
+    "nickname": "Ml",
+    "name": "Micael",
+    "goals": 5,
+    "assists": 0,
+    "moral_score": 106,
+    "badges": [
+      "b1",
+      "atk14",
+      "g1a",
+      "pres1",
+      "ch1"
+    ],
+    "thought": ""
+  },
+  {
+    "nickname": "WC",
+    "name": "Werley",
+    "goals": 10,
+    "assists": 2,
+    "moral_score": 136,
+    "badges": "[\"b1\",\"gl1b\",\"g1a\",\"pres1\",\"vt_ch1\",\"atk5\"]",
+    "thought": null
+  },
+  {
+    "nickname": "Brow",
+    "name": "Bryan",
+    "goals": 3,
+    "assists": 0,
+    "moral_score": 87,
+    "badges": "[\"b1\",\"b9\",\"teg1\",\"sp_unique_brow\",\"gl15\",\"vt_cn1\",\"gl18\",\"g1a\",\"pres1\",\"vt_db1\"]",
+    "thought": null
+  },
+  {
+    "nickname": "Jota goleiro",
+    "name": "Jota",
+    "goals": 0,
+    "assists": 0,
+    "moral_score": 100,
+    "badges": [
+      "[",
+      "\"",
+      "b",
+      "1",
+      "\"",
+      "]",
+      "gl1",
+      "gl4",
+      "pres1"
+    ],
+    "thought": ""
+  },
+  {
+    "nickname": "Cleitim",
+    "name": "Cleiton ",
+    "goals": 1,
+    "assists": 2,
+    "moral_score": 91,
+    "badges": [
+      "b1",
+      "atk20",
+      "def1",
+      "leg1",
+      "g1a",
+      "a1",
+      "pres1",
+      "ch1"
+    ],
+    "thought": "Melhor da pelada…"
+  },
+  {
+    "nickname": "Jv",
+    "name": "Joaovictor ",
+    "goals": 5,
+    "assists": 0,
+    "moral_score": 107,
+    "badges": "[\"b1\",\"leg4\",\"bg_v5\",\"bg_v59\",\"g1a\",\"pres1\"]",
+    "thought": null
+  },
+  {
+    "nickname": "luizhenrique",
+    "name": "Luiz Henrique",
+    "goals": 11,
+    "assists": 0,
+    "moral_score": 120,
+    "badges": "[\"[\",\"\\\"\",\"b\",\"1\",\"\\\"\",\"]\",\"bg_v54\",\"g1a\",\"pres1\"]",
+    "thought": ""
+  },
+  {
+    "nickname": "Guu",
+    "name": "Paulo ",
+    "goals": 8,
+    "assists": 2,
+    "moral_score": 133,
+    "badges": "[\"b1\",\"leg4\",\"def10\",\"pres16\",\"b8\",\"g1a\",\"a1\",\"pres1\",\"gl1a\"]",
+    "thought": null
+  },
+  {
+    "nickname": "Celsin",
+    "name": "Celso",
+    "goals": 8,
+    "assists": 1,
+    "moral_score": 121,
+    "badges": "[\"b1\",\"rc9\",\"b8\",\"b4\",\"g1a\",\"pres1\",\"atk5\"]",
+    "thought": ""
+  },
+  {
+    "nickname": "L.C",
+    "name": "Luciano ",
+    "goals": 1,
+    "assists": 6,
+    "moral_score": 130,
+    "badges": "[\"b1\",\"bg8\",\"def4\",\"def7\",\"b3\",\"g1a\",\"pres1\",\"mg3\"]",
+    "thought": ""
+  },
+  {
+    "nickname": "Ptk",
+    "name": "Patrick",
+    "goals": 4,
+    "assists": 5,
+    "moral_score": 81,
+    "badges": "[\"b1\",\"atk11\",\"atk25\",\"exx5\",\"g1a\",\"a1\",\"pres1\",\"atk20\"]",
+    "thought": "Sempre ouvindo muito nunca falando demais $"
+  },
+  {
+    "nickname": "Gordão ou pitoco.",
+    "name": "Gideon ",
+    "goals": 0,
+    "assists": 0,
+    "moral_score": 100,
+    "badges": "[\"b1\"]",
+    "thought": null
+  },
+  {
+    "nickname": "FP",
+    "name": "Felipão Original",
+    "goals": 2,
+    "assists": 0,
+    "moral_score": 102,
+    "badges": [
+      "[",
+      "\"",
+      "b",
+      "1",
+      "\"",
+      "]",
+      "g1a",
+      "pres1"
+    ],
+    "thought": null
+  },
+  {
+    "nickname": "craqueneto",
+    "name": "craque neto",
+    "goals": 0,
+    "assists": 0,
+    "moral_score": 100,
+    "badges": "[\"b1\"]",
+    "thought": null
+  },
+  {
+    "nickname": "Marques",
+    "name": "Marcos Vinicius ",
+    "goals": 0,
+    "assists": 0,
+    "moral_score": 100,
+    "badges": "[\"b1\"]",
+    "thought": null
+  },
+  {
+    "nickname": "AdminVantablack",
+    "name": "Dono da Pelada",
+    "goals": 0,
+    "assists": 0,
+    "moral_score": 100,
+    "badges": [],
+    "thought": null
+  },
+  {
+    "nickname": "Mr",
+    "name": "Marcos",
+    "goals": 12,
+    "assists": 1,
+    "moral_score": 40,
+    "badges": "[\"b1\",\"mr_badge_rodada_0902\",\"bg10\",\"atk7\",\"bh12\"]",
+    "thought": "Queria pênalti do meio de campo kkk"
+  },
+  {
+    "nickname": "Tonoli",
+    "name": "Lucas",
+    "goals": 2,
+    "assists": 9,
+    "moral_score": 130,
+    "badges": "[\"b1\",\"vb3\",\"pres21\",\"pres31\",\"b8\",\"dev1\",\"gl9\",\"leg2\",\"g1a\",\"a1\",\"pres1\",\"mg8\"]",
+    "thought": "Vontade de comer um cuzinho de nego"
+  },
+  {
+    "nickname": "Markin",
+    "name": "Marcos ",
+    "goals": 1,
+    "assists": 1,
+    "moral_score": 100,
+    "badges": [
+      "b1",
+      "pres20",
+      "fin7",
+      "atk11",
+      "bh6",
+      "b4",
+      "teg1",
+      "leg2",
+      "gx19",
+      "atk21",
+      "g1a",
+      "a1",
+      "pres1"
+    ],
+    "thought": "Invasor de manilhas, aniquilador  de Rio Branquense, chupa xota chupa cu \n\n"
+  },
+  {
+    "nickname": "max",
+    "name": "maxsuel ",
+    "goals": 2,
+    "assists": 0,
+    "moral_score": 90,
+    "badges": [
+      "b1",
+      "rc9",
+      "g1a",
+      "pres1",
+      "vt_ch1"
+    ],
+    "thought": ""
+  }
+]
