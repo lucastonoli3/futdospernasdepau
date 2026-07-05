@@ -3,12 +3,21 @@
 @tailwind utilities;
 
 :root {
-  --vantablack: #020202;
-  --noir-dark: #070707;
-  --pitch-green: #064e3b;
-  --blood-red: #c53030;
-  --glass: rgba(10, 10, 10, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.05);
+  /* Balaio de Gato FC — preto + dourado + verde campo */
+  --ink: #060606;
+  --ink-soft: #0d0d0d;
+  --gold: #f5c518;
+  --gold-deep: #b88a00;
+  --pitch: #15803d;
+  --pitch-bright: #22c55e;
+  --danger: #dc2626;
+  --glass: rgba(12, 12, 12, 0.72);
+  --glass-border: rgba(245, 197, 24, 0.08);
+
+  /* aliases legados (compat) */
+  --vantablack: var(--ink);
+  --noir-dark: var(--ink-soft);
+  --blood-red: var(--gold);
 }
 
 body {
@@ -43,7 +52,53 @@ h3,
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--blood-red);
+  background: var(--gold);
+}
+
+/* Brand helpers */
+.text-gold {
+  color: var(--gold);
+}
+
+.bg-gold {
+  background-color: var(--gold);
+}
+
+.gold-glow {
+  box-shadow: 0 0 24px rgba(245, 197, 24, 0.18);
+}
+
+.brand-gradient {
+  background: linear-gradient(135deg, rgba(245, 197, 24, 0.12), transparent 60%);
+}
+
+/* ===== Acessibilidade: Alto contraste (opt-in) ===== */
+.a11y-contrast .text-neutral-500,
+.a11y-contrast .text-neutral-600,
+.a11y-contrast .text-neutral-700 {
+  color: #e5e5e5 !important;
+}
+
+.a11y-contrast .text-gold,
+.a11y-contrast .text-gold\/70,
+.a11y-contrast .text-gold\/80 {
+  color: #ffd633 !important;
+}
+
+.a11y-contrast .text-pitch-400 {
+  color: #4ade80 !important;
+}
+
+.a11y-contrast .text-red-400,
+.a11y-contrast .text-red-500 {
+  color: #f87171 !important;
+}
+
+/* bordas mais visíveis no modo contraste */
+.a11y-contrast .border-white\/5,
+.a11y-contrast .border-neutral-800,
+.a11y-contrast .border-neutral-800\/50 {
+  border-color: rgba(255, 255, 255, 0.18) !important;
 }
 
 /* Animations & Transitions */
@@ -130,8 +185,8 @@ h3,
 }
 
 .vantablack-card {
-  background: linear-gradient(145deg, #0a0a0a, #020202);
-  border: 1px solid #141414;
+  background: linear-gradient(145deg, #0d0d0d, #050505);
+  border: 1px solid #1a160a;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
@@ -141,7 +196,12 @@ h3,
 }
 
 .text-stroke-red {
-  -webkit-text-stroke: 1px var(--blood-red);
+  -webkit-text-stroke: 1px var(--gold);
+  color: transparent;
+}
+
+.text-stroke-gold {
+  -webkit-text-stroke: 1px var(--gold);
   color: transparent;
 }
 

@@ -11,6 +11,15 @@ interface PostMatchVotingProps {
 }
 
 const PostMatchVoting: React.FC<PostMatchVotingProps> = ({ players, currentUser, currentSession, onSubmit }) => {
+    if (!currentSession || !currentUser) {
+        return (
+            <div className="flex flex-col items-center justify-center p-20 animate-pulse">
+                <div className="w-12 h-12 border-4 border-red-900 border-t-red-600 rounded-full animate-spin"></div>
+                <p className="mt-4 text-neutral-500 font-mono text-[10px] uppercase tracking-widest">Carregando Votação...</p>
+            </div>
+        );
+    }
+
     const [bestId, setBestId] = useState<string | null>(null);
     const [worstId, setWorstId] = useState<string | null>(null);
     const [hasVoted, setHasVoted] = useState(false);
@@ -84,7 +93,7 @@ const PostMatchVoting: React.FC<PostMatchVotingProps> = ({ players, currentUser,
     useEffect(() => {
         checkVoteStatus();
         fetchResults(); // Sempre busca resultados para mostrar no modo bloqueado
-    }, [currentUser.nickname]);
+    }, [currentUser?.nickname]);
 
     const fetchResults = async () => {
         // Buscar todos os votos para encontrar o match_id mais recente
@@ -115,7 +124,7 @@ const PostMatchVoting: React.FC<PostMatchVotingProps> = ({ players, currentUser,
 
     useEffect(() => {
         checkVoteStatus();
-    }, [currentUser.nickname]);
+    }, [currentUser?.nickname]);
 
     const checkVoteStatus = async () => {
         try {
@@ -134,7 +143,7 @@ const PostMatchVoting: React.FC<PostMatchVotingProps> = ({ players, currentUser,
             const { data, error } = await supabase
                 .from('votes')
                 .select('id')
-                .eq('voter_nickname', currentUser.nickname)
+                .eq('voter_nickname', currentUser?.nickname)
                 .eq('match_id', matchId)
                 .maybeSingle();
 
@@ -158,11 +167,11 @@ const PostMatchVoting: React.FC<PostMatchVotingProps> = ({ players, currentUser,
     if (isLocked) return (
         <div className="max-w-4xl mx-auto space-y-12 py-10">
             <div className="text-center space-y-4">
-                <div className="inline-block px-4 py-1 bg-red-600 text-white text-[10px] font-black uppercase tracking-widest animate-pulse">
-                    Urnas Lacradas
+                <div className="inline-block px-4 py-1 bg-gold text-black text-[10px] font-black uppercase tracking-widest animate-pulse">
+                    Votação Fechada
                 </div>
                 <h2 className="text-6xl font-oswald font-black text-white italic tracking-tighter uppercase">Votação Encerrada</h2>
-                <p className="text-neutral-500 font-mono text-xs uppercase">A democracia dorme. O veredito foi dado.</p>
+                <p className="text-neutral-500 font-mono text-xs uppercase">O resultado da rodada já saiu.</p>
             </div>
 
             {results && (
@@ -178,10 +187,10 @@ const PostMatchVoting: React.FC<PostMatchVotingProps> = ({ players, currentUser,
 
                     {/* DESTAQUE BAGRE */}
                     <div className="relative group overflow-hidden border-2 border-red-600 bg-red-950/20 p-8 text-center transition-all hover:scale-105">
-                        <div className="absolute top-0 right-0 p-2 bg-red-600 text-white font-black text-[10px] uppercase">Lixo da Rodada</div>
-                        <span className="text-6xl block mb-4">🤢</span>
+                        <div className="absolute top-0 right-0 p-2 bg-red-600 text-white font-black text-[10px] uppercase">Pé Frio</div>
+                        <span className="text-6xl block mb-4">🧤</span>
                         <h3 className="text-2xl font-oswald font-black text-white uppercase italic">{results.worst?.nickname}</h3>
-                        <p className="text-red-600 font-mono text-[9px] font-bold uppercase mt-2">O Bagre Supremo</p>
+                        <p className="text-red-600 font-mono text-[9px] font-bold uppercase mt-2">Pé Frio da Rodada</p>
                         <img src={results.worst?.photo} className="w-32 h-32 mx-auto mt-6 border-2 border-red-600 object-cover grayscale" alt="Pior" />
                     </div>
                 </div>
@@ -199,19 +208,19 @@ const PostMatchVoting: React.FC<PostMatchVotingProps> = ({ players, currentUser,
     if (hasVoted) return (
         <div className="max-w-2xl mx-auto p-12 text-center border-2 border-dashed border-neutral-900 bg-neutral-900/10 rounded-sm">
             <span className="text-5xl block mb-6 filter grayscale">🗳️</span>
-            <h2 className="text-3xl font-oswald font-black text-white uppercase italic tracking-tighter">DEVER CUMPRIDO</h2>
-            <p className="text-neutral-500 font-mono text-xs uppercase mt-4">Você já votou nesta rodada. Aguarde o resultado final no mural da vergonha.</p>
-            <p className="text-[10px] text-red-900 font-black mt-8 uppercase tracking-widest">A democracia não falha (pelo menos hoje).</p>
+            <h2 className="text-3xl font-oswald font-black text-white uppercase italic tracking-tighter">VOTO REGISTRADO</h2>
+            <p className="text-neutral-500 font-mono text-xs uppercase mt-4">Você já votou nesta rodada. Aguarde o resultado sair no ranking.</p>
+            <p className="text-[10px] text-gold/70 font-black mt-8 uppercase tracking-widest">Valeu pela participação, sócio!</p>
         </div>
     );
 
-    const bestPlayersList = players.filter(p => p.id !== currentUser.id);
+    const bestPlayersList = players.filter(p => currentUser ? p.id !== currentUser.id : true);
 
     return (
         <div className="max-w-4xl mx-auto space-y-12 animate-in fade-in duration-700">
             <div className="text-center space-y-2">
-                <h2 className="text-5xl font-oswald font-black text-white italic tracking-tighter uppercase underline decoration-red-600">Veredito da Noite</h2>
-                <p className="text-neutral-500 font-mono text-xs uppercase tracking-[0.4em]">Sua voz, sua sentença. Não tem volta.</p>
+                <h2 className="text-5xl font-oswald font-black text-white italic tracking-tighter uppercase underline decoration-gold">Votação da Rodada</h2>
+                <p className="text-neutral-500 font-mono text-xs uppercase tracking-[0.4em]">Escolha o craque e o pé frio da partida.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -239,7 +248,7 @@ const PostMatchVoting: React.FC<PostMatchVotingProps> = ({ players, currentUser,
                 <section className="space-y-6">
                     <div className="flex items-center gap-4">
                         <span className="text-2xl">🤢</span>
-                        <h3 className="text-xl font-oswald font-bold text-red-600 uppercase italic">Bagre da Rodada</h3>
+                        <h3 className="text-xl font-oswald font-bold text-red-600 uppercase italic">Pé Frio da Rodada</h3>
                     </div>
                     <div className="grid grid-cols-1 gap-2">
                         {players.map(p => (
@@ -260,16 +269,16 @@ const PostMatchVoting: React.FC<PostMatchVotingProps> = ({ players, currentUser,
                 <button
                     onClick={() => bestId && worstId && onSubmit(bestId, worstId)}
                     disabled={!canSubmit}
-                    className="bg-red-700 hover:bg-red-800 disabled:opacity-20 disabled:grayscale text-white font-black font-oswald text-4xl py-6 px-16 shadow-[0_0_30px_rgba(185,28,28,0.4)] transition-all uppercase tracking-tighter italic"
+                    className="bg-gold hover:bg-gold-600 disabled:opacity-20 disabled:grayscale text-black font-black font-oswald text-4xl py-6 px-16 shadow-[0_0_30px_rgba(245,197,24,0.35)] transition-all uppercase tracking-tighter italic"
                 >
-                    Confirmar Sentença
+                    Confirmar Voto
                 </button>
                 {bestId === worstId && bestId && (
-                    <p className="text-red-600 text-[10px] font-mono mt-4 uppercase font-black">Tu é bipolar? Escolha jogadores diferentes, gênio.</p>
+                    <p className="text-gold text-[10px] font-mono mt-4 uppercase font-black">Escolha jogadores diferentes para craque e pé frio.</p>
                 )}
 
                 <div className="mt-20 opacity-50">
-                    <p className="text-[9px] font-black text-neutral-600 uppercase tracking-[0.3em] mb-2">As urnas serão lacradas em breve.</p>
+                    <p className="text-[9px] font-black text-neutral-600 uppercase tracking-[0.3em] mb-2">A votação fecha em breve.</p>
                     <div className="text-xl font-oswald font-black text-neutral-400 tabular-nums">
                         Tempo Restante: {timeLeft}
                     </div>

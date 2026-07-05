@@ -1,11 +1,11 @@
 {
-    "name": "FDP Pernas de Pau",
-    "short_name": "FDP Fut",
-    "description": "Sistema de Gestão de Pelada - O Legado do Bueiro",
+    "name": "Balaio de Gato FC",
+    "short_name": "Balaio FC",
+    "description": "Sistema oficial do Balaio de Gato FC — futebol de campo, ranking, votação e tesouraria da resenha.",
     "start_url": "/",
     "display": "standalone",
-    "background_color": "#000000",
-    "theme_color": "#dc143c",
+    "background_color": "#0a0a0a",
+    "theme_color": "#F5C518",
     "icons": [
         {
             "src": "/icon-512.png",

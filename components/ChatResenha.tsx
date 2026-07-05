@@ -71,7 +71,7 @@ const ChatResenha: React.FC<ChatResenhaProps> = ({ currentUser, allPlayers }) =>
       if (data) {
         setPersistentMessages(data.map(m => ({
           id: m.id,
-          sender_name: m.players?.nickname || 'FDP',
+          sender_name: m.players?.nickname || 'Balaio',
           text: m.text,
           avatar: m.players?.photo || '',
           created_at: m.created_at
@@ -97,7 +97,7 @@ const ChatResenha: React.FC<ChatResenhaProps> = ({ currentUser, allPlayers }) =>
     const { data } = await supabase
       .from('resenha_confirmations')
       .select('id')
-      .eq('player_id', currentUser.id)
+      .eq('player_id', currentUser?.id)
       .eq('month_year', monthYear)
       .maybeSingle();
 
@@ -108,8 +108,8 @@ const ChatResenha: React.FC<ChatResenhaProps> = ({ currentUser, allPlayers }) =>
     if (isConfirmed) return;
     try {
       const monthYear = new Date().toISOString().slice(0, 7);
-      await supabase.from('resenha_confirmations').insert([{ player_id: currentUser.id, month_year: monthYear }]);
-      await supabase.from('players').update({ debt: (currentUser.debt || 0) + 15, is_paid: false }).eq('id', currentUser.id);
+      await supabase.from('resenha_confirmations').insert([{ player_id: currentUser?.id, month_year: monthYear }]);
+      await supabase.from('players').update({ debt: (currentUser?.debt || 0) + 15, is_paid: false }).eq('id', currentUser?.id);
       setIsConfirmed(true);
       alert("CONFIRMADO!");
     } catch (e) { alert("Erro ao confirmar."); }
@@ -120,7 +120,7 @@ const ChatResenha: React.FC<ChatResenhaProps> = ({ currentUser, allPlayers }) =>
 
     try {
       const { error } = await supabase.from('humiliations').insert([{
-        performer_id: currentUser.id,
+        performer_id: currentUser?.id,
         victim_id: victimId,
         type: featType,
         description: featDescription,
@@ -129,7 +129,7 @@ const ChatResenha: React.FC<ChatResenhaProps> = ({ currentUser, allPlayers }) =>
 
       if (error) throw error;
 
-      alert("FEITO REPORTADO! Agora aguarde a revisão do Admin para a moral subir.");
+      alert("Lance enviado! A diretoria vai conferir e registrar na resenha.");
       setShowReportForm(false);
       setVictimId('');
       setFeatDescription('');
@@ -174,7 +174,7 @@ const ChatResenha: React.FC<ChatResenhaProps> = ({ currentUser, allPlayers }) =>
 
     try {
       const { error } = await supabase.from('resenha_messages').insert([{
-        player_id: currentUser.id,
+        player_id: currentUser?.id,
         text: input.trim()
       }]);
 
@@ -215,18 +215,16 @@ const ChatResenha: React.FC<ChatResenhaProps> = ({ currentUser, allPlayers }) =>
       {/* Mural Header */}
       <div className="bg-neutral-900 p-6 border-b border-neutral-800 flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <div className="w-10 h-10 bg-red-700 flex items-center justify-center rounded-sm skew-x-[-12deg] shadow-[0_0_20px_rgba(185,28,28,0.3)]">
-            <span className="text-white font-black text-xl italic uppercase font-oswald -skew-x-[-12deg]">Log</span>
-          </div>
+          <img src="/escudo.svg" alt="Balaio de Gato FC" className="w-11 h-11 object-contain" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
           <div>
-            <h3 className="text-white font-black text-lg uppercase tracking-tighter leading-none italic">Mural do Legado</h3>
-            <p className="text-[10px] text-neutral-500 font-mono uppercase tracking-[0.4em] mt-1">Registros Perpétuos da Várzea</p>
+            <h3 className="text-white font-black text-lg uppercase tracking-tighter leading-none italic">Mural da Resenha</h3>
+            <p className="text-[10px] text-neutral-500 font-mono uppercase tracking-[0.4em] mt-1">A história do Balaio de Gato FC</p>
           </div>
         </div>
         <div className="flex gap-4">
           <button
             onClick={() => setShowReportForm(!showReportForm)}
-            className="px-4 py-2 text-[10px] uppercase font-black tracking-widest border border-red-900 bg-red-700/20 text-red-500 hover:bg-red-700 hover:text-white transition-all italic"
+            className="px-4 py-2 text-[10px] uppercase font-black tracking-widest border border-gold/40 bg-gold/10 text-gold hover:bg-gold hover:text-black transition-all italic"
           >
             {showReportForm ? 'Cancelar' : 'Relatar Feito'}
           </button>
@@ -244,30 +242,30 @@ const ChatResenha: React.FC<ChatResenhaProps> = ({ currentUser, allPlayers }) =>
 
       {/* Form de Relatar Feito */}
       {showReportForm && (
-        <div className="bg-neutral-900 border-b border-red-900/30 p-6 space-y-4 animate-in slide-in-from-top duration-300 z-20">
+        <div className="bg-neutral-900 border-b border-gold/20 p-6 space-y-4 animate-in slide-in-from-top duration-300 z-20">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-[9px] text-neutral-500 uppercase font-black block mb-1">O que você fez?</label>
+              <label className="text-[9px] text-neutral-500 uppercase font-black block mb-1">O que rolou?</label>
               <select
                 value={featType}
                 onChange={(e) => setFeatType(e.target.value)}
-                className="w-full bg-black border border-neutral-800 p-2 text-white font-oswald text-xs uppercase outline-none focus:border-red-700"
+                className="w-full bg-black border border-neutral-800 p-2 text-white font-oswald text-xs uppercase outline-none focus:border-gold"
               >
-                <option value="caneta">Dê uma Caneta</option>
-                <option value="chapeu">Dê um Chapéu</option>
-                <option value="dibre">Dibre Humilhante</option>
+                <option value="caneta">Dei uma Caneta</option>
+                <option value="chapeu">Dei um Chapéu</option>
+                <option value="dibre">Drible Desconcertante</option>
                 <option value="gol_placa">Gol de Placa</option>
-                <option value="vexame">Vi um Vexame</option>
+                <option value="vexame">Lance pra Resenha</option>
               </select>
             </div>
             <div>
-              <label className="text-[9px] text-neutral-500 uppercase font-black block mb-1">Vítima (Quem tomou?)</label>
+              <label className="text-[9px] text-neutral-500 uppercase font-black block mb-1">Em quem? (sócio)</label>
               <select
                 value={victimId}
                 onChange={(e) => setVictimId(e.target.value)}
-                className="w-full bg-black border border-neutral-800 p-2 text-white font-oswald text-xs uppercase outline-none focus:border-red-700"
+                className="w-full bg-black border border-neutral-800 p-2 text-white font-oswald text-xs uppercase outline-none focus:border-gold"
               >
-                <option value="">Escolha a vítima...</option>
+                <option value="">Escolha o parceiro...</option>
                 {allPlayers.filter(p => p.id !== currentUser.id).map(p => (
                   <option key={p.id} value={p.id}>{p.nickname}</option>
                 ))}
@@ -275,20 +273,20 @@ const ChatResenha: React.FC<ChatResenhaProps> = ({ currentUser, allPlayers }) =>
             </div>
           </div>
           <div>
-            <label className="text-[9px] text-neutral-500 uppercase font-black block mb-1">Detalhes do Crime</label>
+            <label className="text-[9px] text-neutral-500 uppercase font-black block mb-1">Conta como foi</label>
             <textarea
               value={featDescription}
               onChange={(e) => setFeatDescription(e.target.value)}
-              placeholder="Descreva a humilhação..."
-              className="w-full bg-black border border-neutral-800 p-2 text-white font-mono text-[10px] outline-none focus:border-red-700 h-20 resize-none"
+              placeholder="Descreva o lance da resenha..."
+              className="w-full bg-black border border-neutral-800 p-2 text-white font-mono text-[10px] outline-none focus:border-gold h-20 resize-none"
             />
           </div>
           <button
             onClick={handleSubmitFeat}
             disabled={!victimId || !featDescription}
-            className="w-full bg-white text-black py-3 font-oswald font-black uppercase text-xs hover:bg-red-700 hover:text-white transition-all disabled:opacity-20"
+            className="w-full bg-gold text-black py-3 font-oswald font-black uppercase text-xs hover:bg-gold-600 transition-all disabled:opacity-20"
           >
-            Protocolar Feito para Revisão
+            Enviar para a Diretoria revisar
           </button>
         </div>
       )}
@@ -299,28 +297,28 @@ const ChatResenha: React.FC<ChatResenhaProps> = ({ currentUser, allPlayers }) =>
           if (item.type === 'FEITO') {
             return (
               <div key={item.id} className="relative pl-12 pb-2 group animate-in slide-in-from-left duration-500">
-                <div className="absolute left-4 top-0 bottom-0 w-[2px] bg-red-900/30 group-hover:bg-red-600/50 transition-colors"></div>
-                <div className="absolute left-[10px] top-1 w-4 h-4 bg-black border-2 border-red-600 rounded-full z-10"></div>
+                <div className="absolute left-4 top-0 bottom-0 w-[2px] bg-gold/30 group-hover:bg-gold/50 transition-colors"></div>
+                <div className="absolute left-[10px] top-1 w-4 h-4 bg-black border-2 border-gold rounded-full z-10"></div>
 
-                <div className="bg-neutral-900/40 border border-neutral-800 p-4 rounded-sm hover:border-red-600/50 transition-all">
+                <div className="bg-neutral-900/40 border border-neutral-800 p-4 rounded-lg hover:border-gold/50 transition-all">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
                       <div className="relative">
-                        <img src={item.performer?.photo} className="w-10 h-10 object-cover border border-red-900" />
-                        <div className="absolute -bottom-1 -right-1 bg-red-600 text-[8px] font-black px-1 uppercase italic">Glória</div>
+                        <img src={item.performer?.photo} className="w-10 h-10 object-cover rounded-lg border border-gold/40" />
+                        <div className="absolute -bottom-1 -right-1 bg-gold text-black text-[8px] font-black px-1 uppercase italic rounded">Craque</div>
                       </div>
                       <div className="flex flex-col">
                         <span className="text-white font-oswald text-sm uppercase tracking-tighter">{item.performer?.nickname}</span>
-                        <span className="text-red-500 font-black italic text-[10px] uppercase tracking-widest">{item.featType}</span>
+                        <span className="text-gold font-black italic text-[10px] uppercase tracking-widest">{item.featType}</span>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="text-[9px] text-neutral-600 font-mono uppercase">{new Date(item.created_at).toLocaleDateString('pt-BR')}</p>
-                      <p className="text-[10px] text-red-600 font-black italic uppercase">Confirmado</p>
+                      <p className="text-[10px] text-pitch-400 font-black italic uppercase">Confirmado</p>
                     </div>
                   </div>
                   <p className="text-neutral-400 text-sm font-mono italic leading-relaxed border-l-2 border-neutral-800 pl-4 py-1">
-                    "{item.desc}" <span className="text-red-900 font-black not-italic ml-2">@ {item.victim?.nickname}</span>
+                    "{item.desc}" <span className="text-gold font-black not-italic ml-2">@ {item.victim?.nickname}</span>
                   </p>
                 </div>
               </div>
@@ -341,7 +339,7 @@ const ChatResenha: React.FC<ChatResenhaProps> = ({ currentUser, allPlayers }) =>
               <div className="bg-neutral-900/20 border-l border-neutral-800 pl-4 py-1">
                 <p className="text-xs text-neutral-400 font-medium leading-relaxed">
                   {item.text.split(/(@\w+)/g).map((part: string, i: number) =>
-                    part.startsWith('@') ? <span key={i} className="text-red-600 font-black italic">{part}</span> : part
+                    part.startsWith('@') ? <span key={i} className="text-gold font-black italic">{part}</span> : part
                   )}
                 </p>
               </div>
@@ -353,9 +351,9 @@ const ChatResenha: React.FC<ChatResenhaProps> = ({ currentUser, allPlayers }) =>
 
       {/* Mention Dropdown */}
       {showMentionList && filteredPlayers.length > 0 && (
-        <div className="absolute bottom-20 left-6 w-64 bg-neutral-900 border border-red-900/30 shadow-2xl z-50 animate-in slide-in-from-bottom-2">
-          <div className="bg-red-950/20 p-2 border-b border-red-900/30">
-            <p className="text-[9px] text-red-600 font-black uppercase tracking-widest">Escolha a Vítima / Alvo</p>
+        <div className="absolute bottom-20 left-6 w-64 bg-neutral-900 border border-gold/30 shadow-2xl z-50 animate-in slide-in-from-bottom-2 rounded-xl overflow-hidden">
+          <div className="bg-gold/10 p-2 border-b border-gold/20">
+            <p className="text-[9px] text-gold font-black uppercase tracking-widest">Marcar um sócio</p>
           </div>
           <div className="max-h-48 overflow-y-auto">
             {filteredPlayers.map(p => (
@@ -380,18 +378,18 @@ const ChatResenha: React.FC<ChatResenhaProps> = ({ currentUser, allPlayers }) =>
             type="text"
             value={input}
             onChange={handleInputChange}
-            placeholder="Relate um feito ou comente (@alguém)..."
-            className="w-full bg-black text-white text-sm px-6 py-4 focus:outline-none border-b-2 border-neutral-800 focus:border-red-700 transition-all font-mono"
+            placeholder="Manda a real na resenha (@alguém)..."
+            className="w-full bg-black text-white text-sm px-6 py-4 focus:outline-none border-b-2 border-neutral-800 focus:border-gold transition-all font-mono"
           />
           <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] text-neutral-600 font-black uppercase italic tracking-widest pointer-events-none">
-            Mural Perpétuo
+            Resenha
           </div>
         </div>
         <button
           type="submit"
-          className="bg-white text-black h-12 w-12 flex items-center justify-center hover:bg-red-700 hover:text-white transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] active:scale-95"
+          className="bg-gold text-black h-12 w-12 flex items-center justify-center rounded-xl hover:bg-gold-600 transition-all shadow-[0_0_20px_rgba(245,197,24,0.2)] active:scale-95"
         >
-          <span className="text-xl">✍️</span>
+          <span className="text-xl">⚽</span>
         </button>
       </form>
     </div>

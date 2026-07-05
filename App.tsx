@@ -10,8 +10,12 @@ import AdminPanel from './components/AdminPanel';
 import Caixinha from './components/Caixinha';
 import PostMatchVoting from './components/PostMatchVoting';
 import PlayerProfile from './components/PlayerProfile';
+import NewsPortal from './components/NewsPortal';
+import Logo from './components/Logo';
+import AccessibilityControl from './components/AccessibilityControl';
 import { supabase } from './services/supabaseClient';
 import { ADMIN_NICKNAMES } from './constants';
+import { CLUB } from './brandConfig';
 
 function App() {
   const [isLogged, setIsLogged] = useState(() => {
@@ -20,7 +24,7 @@ function App() {
   const [currentUser, setCurrentUser] = useState<Player | null>(null);
   const [allPlayers, setAllPlayers] = useState<Player[]>([]);
   const [currentSession, setCurrentSession] = useState<MatchSession | null>(null);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'partida' | 'resenha' | 'admin' | 'financeiro' | 'votacao'>(() => {
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'partida' | 'resenha' | 'admin' | 'financeiro' | 'votacao' | 'noticias'>(() => {
     return (localStorage.getItem('fdp_active_tab') as any) || 'dashboard';
   });
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
@@ -159,16 +163,18 @@ function App() {
 
   // 3. Restaurar Sessão Unificado
   useEffect(() => {
+    let isMounted = true;
     const loadAll = async () => {
       setIsLoading(true);
       setLoadError(false);
 
-      // Safety timeout: se após 8s ainda não carregou, desbloqueia o app
+      // Safety timeout: se após 5s ainda não carregou, desbloqueia o app SEM destruir sessão
       const safetyTimeout = setTimeout(() => {
-        console.error('TIMEOUT: load demorou +8s. Forçando recovery...');
-        handleLogout();
+        if (!isMounted) return;
+        console.error('TIMEOUT: load demorou +5s. Desbloqueando app...');
+        setLoadError(true);
         setIsLoading(false);
-      }, 8000);
+      }, 5000);
 
       try {
         // 1. Carregar dados básicos
@@ -210,23 +216,26 @@ function App() {
                 } catch (e) { return []; }
               })(),
             };
-            setCurrentUser(formatted);
-            setIsLogged(true);
+            if (isMounted) {
+              setCurrentUser(formatted);
+              setIsLogged(true);
+            }
           } else {
             // Usuário não encontrado no banco — limpa sessão corrompida
-            handleLogout();
+            if (isMounted) handleLogout();
           }
         }
       } catch (err) {
         console.error('ERRO NO LOAD_ALL:', err);
-        setLoadError(true);
-        handleLogout(); // Garante que o app não fique preso
+        if (isMounted) setLoadError(true);
+        // NÃO faz logout automático — permite retry sem destruir sessão
       } finally {
         clearTimeout(safetyTimeout);
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
     loadAll();
+    return () => { isMounted = false; };
   }, []);
 
   const handleApplyVotes = async (bestId: string, worstId: string) => {
@@ -254,7 +263,7 @@ function App() {
       }]);
 
       if (vError) {
-        alert("VOCÊ JÁ VOTOU ESSA SEMANA, VAGABUNDO! Trapaça aqui não.");
+        alert("Você já votou nesta rodada, parceiro! Um voto por sócio.");
         setActiveTab('dashboard');
         return;
       }
@@ -303,16 +312,26 @@ function App() {
   // Só sai da tela de carregamento quando os dados e a sessão (se logado) estiverem prontos
   if (isLoading) {
     return (
-      <div className="fixed inset-0 bg-black z-[1000] flex flex-col items-center justify-center">
-        <div className="w-16 h-16 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="font-oswald text-white uppercase italic tracking-[0.4em] animate-pulse">
-          Iniciando Protocolo Vantablack...
+      <div style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }} className="fixed inset-0 bg-black z-[1000] flex flex-col items-center justify-center">
+        <img src="/escudo.svg" alt="Balaio de Gato FC" width={96} height={96} style={{ width: 96, height: 96, objectFit: 'contain', marginBottom: 16, filter: 'drop-shadow(0 0 24px rgba(245,197,24,.35))' }} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+        <div style={{ width: 64, height: 64, border: '4px solid #F5C518', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: 16 }} className="w-16 h-16 border-4 border-gold border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p style={{ color: '#F5C518', fontFamily: 'Oswald, sans-serif', textTransform: 'uppercase', fontStyle: 'italic', letterSpacing: '0.4em', fontSize: 14 }} className="font-oswald text-gold uppercase italic tracking-[0.4em] animate-pulse">
+          Balaio de Gato FC
         </p>
         {loadError && (
-          <p className="mt-4 text-red-500 font-mono text-xs uppercase tracking-widest">
-            Erro de conexão. Recarregando...
-          </p>
+          <div style={{ marginTop: 16, textAlign: 'center' }}>
+            <p style={{ color: '#ef4444', fontFamily: 'monospace', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.15em' }} className="text-red-500 font-mono text-xs uppercase tracking-widest">
+              Erro de conexão.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              style={{ marginTop: 12, padding: '10px 24px', background: '#F5C518', color: '#000', border: 'none', borderRadius: 12, fontFamily: 'Oswald, sans-serif', fontWeight: 900, textTransform: 'uppercase', cursor: 'pointer', fontSize: 12, letterSpacing: '0.2em' }}
+            >
+              TENTAR DE NOVO
+            </button>
+          </div>
         )}
+        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       </div>
     );
   }
@@ -321,20 +340,21 @@ function App() {
     <div className="min-h-screen bg-black text-white selection:bg-red-900 flex flex-col md:flex-row">
 
       {/* SIDEBAR (Desktop) */}
-      <aside className="hidden md:flex flex-col w-64 bg-neutral-900/40 border-r border-neutral-800/50 backdrop-blur-2xl sticky top-0 h-screen z-50">
-        <div className="p-6 border-b border-neutral-800/50">
+      <aside className="hidden md:flex flex-col w-64 bg-neutral-900/40 border-r border-gold/10 backdrop-blur-2xl sticky top-0 h-screen z-50">
+        <div className="p-6 border-b border-gold/10">
           <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setActiveTab('dashboard')}>
-            <span className="text-3xl filter drop-shadow-[0_0_8px_rgba(255,0,0,0.5)] group-hover:scale-110 transition-transform">⚽</span>
+            <Logo size={44} className="group-hover:scale-110 transition-transform drop-shadow-[0_0_8px_rgba(245,197,24,0.4)]" />
             <h1 className="font-oswald text-2xl font-black tracking-tighter uppercase italic leading-tight">
-              FDP <br />
-              <span className="text-red-600 text-lg">PERNAS DE PAU</span>
+              BALAIO <br />
+              <span className="text-gold text-lg">DE GATO FC</span>
             </h1>
           </div>
         </div>
 
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto no-scrollbar">
           <SideButton active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon="📊" label="Ranking Geral" />
-          <SideButton active={activeTab === 'partida'} onClick={() => setActiveTab('partida')} icon="🏟️" label="Controle de Pelada" />
+          <SideButton active={activeTab === 'noticias'} onClick={() => setActiveTab('noticias')} icon="📰" label="Notícias do Clube" />
+          <SideButton active={activeTab === 'partida'} onClick={() => setActiveTab('partida')} icon="🏟️" label="Dia de Jogo" />
           <SideButton
             active={activeTab === 'votacao'}
             onClick={() => setActiveTab('votacao')}
@@ -342,14 +362,18 @@ function App() {
             label="Centro de Votação"
             urgent={currentSession?.votingOpen}
           />
-          <SideButton active={activeTab === 'resenha'} onClick={() => setActiveTab('resenha')} icon="🏆" label="Mural de Feitos" />
-          <SideButton active={activeTab === 'financeiro'} onClick={() => setActiveTab('financeiro')} icon="💸" label="Caixa da Pelada" />
+          <SideButton active={activeTab === 'resenha'} onClick={() => setActiveTab('resenha')} icon="🏆" label="Mural da Resenha" />
+          <SideButton active={activeTab === 'financeiro'} onClick={() => setActiveTab('financeiro')} icon="💸" label="Tesouraria" />
 
           <div className="pt-8 pb-2">
-            <p className="text-[10px] font-mono text-neutral-600 uppercase tracking-[0.3em] px-4 mb-2">Comando</p>
-            <SideButton active={activeTab === 'admin'} onClick={() => setActiveTab('admin')} icon="⚙️" label="Painel de Admin" color="text-red-600" />
+            <p className="text-[10px] font-mono text-neutral-600 uppercase tracking-[0.3em] px-4 mb-2">Diretoria</p>
+            <SideButton active={activeTab === 'admin'} onClick={() => setActiveTab('admin')} icon="⚙️" label="Painel da Diretoria" color="text-gold" />
           </div>
         </nav>
+
+        <div className="px-6 pb-2">
+          <AccessibilityControl />
+        </div>
 
         {isLogged && currentUser && (
           <div className="px-6 pb-4">
@@ -358,15 +382,15 @@ function App() {
         )}
 
         {isLogged && (
-          <div className="p-4 border-t border-neutral-800/50 bg-neutral-900/20">
-            <div className="flex items-center gap-3 p-2 rounded-xl border border-neutral-800/30 hover:bg-neutral-800/50 transition-all cursor-pointer group" onClick={() => setSelectedPlayer(currentUser)}>
-              <img src={currentUser?.photo} className="w-10 h-10 rounded-full border border-red-900/50 object-cover" alt="Perfil" />
+          <div className="p-4 border-t border-gold/10 bg-neutral-900/20">
+            <div className="flex items-center gap-3 p-2 rounded-xl border border-gold/10 hover:bg-neutral-800/50 transition-all cursor-pointer group" onClick={() => setSelectedPlayer(currentUser)}>
+              <img src={currentUser?.photo} className="w-10 h-10 rounded-full border border-gold/40 object-cover" alt="Perfil" />
               <div className="flex-1 overflow-hidden">
                 <p className="text-xs font-black truncate uppercase">{currentUser?.nickname}</p>
                 <p className="text-[10px] text-neutral-500 font-mono">Ver Perfil</p>
               </div>
             </div>
-            <button onClick={handleLogout} className="w-full mt-3 text-[10px] font-mono text-neutral-600 uppercase font-black hover:text-red-500 transition-colors py-2">Fugir (Sair)</button>
+            <button onClick={handleLogout} className="w-full mt-3 text-[10px] font-mono text-neutral-600 uppercase font-black hover:text-gold transition-colors py-2">Sair</button>
           </div>
         )}
       </aside>
@@ -377,30 +401,31 @@ function App() {
           {selectedPlayer ? (
             <button
               onClick={() => setSelectedPlayer(null)}
-              className="flex items-center gap-2 bg-gradient-to-r from-red-800 to-red-600 text-white px-4 py-2 rounded-xl font-oswald font-black uppercase italic text-xs shadow-[0_4px_15px_rgba(220,38,38,0.4)] active:scale-95 transition-all"
+              className="flex items-center gap-2 bg-gradient-to-r from-gold-700 to-gold text-black px-4 py-2 rounded-xl font-oswald font-black uppercase italic text-xs shadow-[0_4px_15px_rgba(245,197,24,0.35)] active:scale-95 transition-all"
             >
               <span className="text-lg">←</span> VOLTAR
             </button>
           ) : (
             <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('dashboard')}>
-              <span className="text-xl">⚽</span>
-              <h1 className="font-oswald text-lg font-black uppercase italic text-red-600">FDP <span className="text-white">FUT</span></h1>
+              <Logo size={30} />
+              <h1 className="font-oswald text-lg font-black uppercase italic text-gold">BALAIO <span className="text-white">FC</span></h1>
             </div>
           )}
         </div>
         <div className="flex items-center gap-3">
+          <AccessibilityControl compact />
           {isLogged && currentUser && <NotificationCenter currentUser={currentUser} />}
           {isLogged ? (
             <img
               src={currentUser?.photo}
-              className="w-8 h-8 rounded-full border border-red-900 shadow-[0_0_10px_rgba(185,28,28,0.3)] object-cover"
+              className="w-8 h-8 rounded-full border border-gold/60 shadow-[0_0_10px_rgba(245,197,24,0.25)] object-cover"
               alt="Perfil"
               onClick={() => setSelectedPlayer(currentUser)}
             />
           ) : (
             <button
               onClick={() => setActiveTab('resenha')}
-              className="bg-red-700 text-white px-3 py-1.5 font-oswald font-bold uppercase italic text-[10px] border border-red-900 rounded"
+              className="bg-gold text-black px-3 py-1.5 font-oswald font-bold uppercase italic text-[10px] border border-gold-700 rounded"
             >Entrar</button>
           )}
         </div>
@@ -413,11 +438,11 @@ function App() {
             <div className="animate-slide-up">
               <button
                 onClick={() => setSelectedPlayer(null)}
-                className="w-full mb-8 py-4 bg-gradient-to-br from-neutral-800 to-neutral-900 border border-white/10 rounded-2xl flex items-center justify-center gap-3 group shadow-2xl hover:border-red-600/50 transition-all active:scale-[0.98]"
+                className="w-full mb-8 py-4 bg-gradient-to-br from-neutral-800 to-neutral-900 border border-white/10 rounded-2xl flex items-center justify-center gap-3 group shadow-2xl hover:border-gold/50 transition-all active:scale-[0.98]"
               >
-                <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-white font-black group-hover:scale-110 transition-transform">←</div>
+                <div className="w-8 h-8 rounded-full bg-gold flex items-center justify-center text-black font-black group-hover:scale-110 transition-transform">←</div>
                 <div className="text-left">
-                  <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest leading-none mb-1">Cansou de ver esse aqui?</p>
+                  <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest leading-none mb-1">Voltar</p>
                   <p className="text-sm font-oswald font-black text-white uppercase italic tracking-tighter leading-none">VOLTAR PARA O {activeTab === 'dashboard' ? 'RANKING' : activeTab.toUpperCase()}</p>
                 </div>
               </button>
@@ -427,15 +452,42 @@ function App() {
             <div className="animate-slide-up">
               {activeTab === 'dashboard' && (
                 <div className="space-y-6">
-                  <div className="mb-8">
-                    <h2 className="section-title text-3xl md:text-5xl mb-2">Mural do <span className="text-red-600">Orgulho</span></h2>
-                    <p className="text-neutral-500 font-mono text-[9px] md:text-xs uppercase tracking-[0.4em]">Temporada Pro • Live Status</p>
+                  {/* HERO DO CLUBE — visual de campo de futebol */}
+                  <div className="relative overflow-hidden rounded-[32px] border border-gold/20 mb-8 shadow-2xl">
+                    <div className="absolute inset-0 bg-gradient-to-br from-pitch-700 via-pitch-900 to-black"></div>
+                    {/* faixas do gramado */}
+                    <div className="absolute inset-0 opacity-[0.06]" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #ffffff 0 70px, transparent 70px 140px)' }}></div>
+                    {/* marcações do campo */}
+                    <div className="absolute -right-20 -bottom-24 w-72 h-72 rounded-full border-[3px] border-white/15"></div>
+                    <div className="absolute -right-4 -bottom-8 w-28 h-28 rounded-full border-[3px] border-white/10"></div>
+                    <div className="absolute left-1/2 top-0 bottom-0 w-[2px] bg-white/10 hidden md:block"></div>
+
+                    <div className="relative z-10 p-6 md:p-10 flex flex-col sm:flex-row items-center gap-5 md:gap-8 text-center sm:text-left">
+                      <Logo size={100} className="drop-shadow-[0_10px_30px_rgba(0,0,0,0.7)] shrink-0" />
+                      <div>
+                        <p className="text-[10px] md:text-xs font-mono text-gold uppercase tracking-[0.4em] mb-2">Futebol de Campo • Cariacica-ES</p>
+                        <h2 className="font-oswald text-4xl md:text-6xl font-black uppercase italic tracking-tighter text-white leading-none">
+                          Balaio de Gato <span className="text-gold">FC</span>
+                        </h2>
+                        <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-4">
+                          <span className="px-4 py-1.5 rounded-full bg-black/40 border border-white/10 text-white text-xs font-bold">🏆 Temporada {new Date().getFullYear()}</span>
+                          <span className="px-4 py-1.5 rounded-full bg-black/40 border border-white/10 text-white text-xs font-bold">👥 {allPlayers.length} sócios</span>
+                          <span className="px-4 py-1.5 rounded-full bg-black/40 border border-white/10 text-white text-xs font-bold">⚽ {allPlayers.reduce((a, p) => a + (p.goals || 0), 0)} gols na temporada</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   <Rankings players={allPlayers} onPlayerClick={setSelectedPlayer} />
                 </div>
               )}
+              {/* Notícias do clube: público (não exige login) */}
+              {activeTab === 'noticias' && (
+                <div className="animate-slide-up pt-4">
+                  <NewsPortal currentUser={currentUser} />
+                </div>
+              )}
               {/* Proteção para abas de Jogador */}
-              {!isLogged && activeTab !== 'dashboard' ? (
+              {!isLogged && activeTab !== 'dashboard' && activeTab !== 'noticias' ? (
                 <div className="max-w-md mx-auto mt-12">
                   <LoginScreen onLogin={handleLogin} />
                 </div>
@@ -469,17 +521,17 @@ function App() {
                         setTrainingConfirmedIds={setTrainingConfirmedIds}
                       />
                     ) : (
-                      <div className="flex flex-col items-center justify-center p-20 text-center space-y-6 glass-panel border-red-900/30 rounded-3xl mt-12">
-                        <span className="text-6xl filter drop-shadow-[0_0_15px_rgba(255,0,0,0.5)]">🚫</span>
-                        <h2 className="text-4xl font-oswald font-black text-red-600 uppercase italic">Acesso Negado</h2>
+                      <div className="flex flex-col items-center justify-center p-20 text-center space-y-6 glass-panel border-gold/20 rounded-3xl mt-12">
+                        <span className="text-6xl filter drop-shadow-[0_0_15px_rgba(245,197,24,0.5)]">🔒</span>
+                        <h2 className="text-4xl font-oswald font-black text-gold uppercase italic">Área da Diretoria</h2>
                         <p className="max-w-md text-neutral-500 font-mono text-xs uppercase tracking-widest leading-relaxed">
-                          Área restrita aos administradores do bueiro. Sai daqui antes que eu te dê um rapa.
+                          Este painel é exclusivo da diretoria do Balaio de Gato FC. Fala com um diretor pra liberar seu acesso.
                         </p>
                         <button
                           onClick={() => setActiveTab('dashboard')}
-                          className="bg-white text-black px-8 py-3 font-oswald font-black uppercase text-sm hover:bg-neutral-200 transition-all border-b-4 border-neutral-400 active:translate-y-1 active:border-b-0"
+                          className="bg-gold text-black px-8 py-3 font-oswald font-black uppercase text-sm hover:bg-gold-600 transition-all border-b-4 border-gold-700 active:translate-y-1 active:border-b-0"
                         >
-                          Voltar para o Rank
+                          Voltar para o Ranking
                         </button>
                       </div>
                     )
@@ -495,7 +547,8 @@ function App() {
       <nav className="md:hidden fixed bottom-0 left-0 right-0 glass-panel border-t border-white/5 p-2 px-4 z-50 rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.8)]">
         <div className="flex justify-between items-center max-w-lg mx-auto h-16">
           <NavButton active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon="📊" label="Rank" />
-          <NavButton active={activeTab === 'partida'} onClick={() => setActiveTab('partida')} icon="🏟️" label="Pelada" />
+          <NavButton active={activeTab === 'noticias'} onClick={() => setActiveTab('noticias')} icon="📰" label="News" />
+          <NavButton active={activeTab === 'partida'} onClick={() => setActiveTab('partida')} icon="🏟️" label="Jogo" />
           <NavButton
             active={activeTab === 'votacao'}
             onClick={() => setActiveTab('votacao')}
@@ -503,9 +556,9 @@ function App() {
             label="Voto"
             urgent={currentSession?.votingOpen}
           />
-          <NavButton active={activeTab === 'resenha'} onClick={() => setActiveTab('resenha')} icon="🏆" label="FEITOS" />
+          <NavButton active={activeTab === 'resenha'} onClick={() => setActiveTab('resenha')} icon="🏆" label="Resenha" />
           <NavButton active={activeTab === 'financeiro'} onClick={() => setActiveTab('financeiro')} icon="💸" label="Caixa" />
-          {currentUser?.is_admin && <NavButton active={activeTab === 'admin'} onClick={() => setActiveTab('admin')} icon="⚙️" label="Admin" color="text-red-500" />}
+          {currentUser?.is_admin && <NavButton active={activeTab === 'admin'} onClick={() => setActiveTab('admin')} icon="⚙️" label="Diretoria" color="text-gold" />}
         </div>
       </nav>
     </div>
@@ -516,19 +569,19 @@ function SideButton({ active, onClick, icon, label, urgent = false, color = "tex
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all relative group ${active ? 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.2)]' : 'text-neutral-500 hover:text-white hover:bg-neutral-800/50'}`}
+      className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all relative group ${active ? 'bg-gold text-black shadow-[0_0_20px_rgba(245,197,24,0.25)]' : 'text-neutral-500 hover:text-white hover:bg-neutral-800/50'}`}
     >
       <span className="text-xl group-hover:scale-110 transition-transform">{icon}</span>
-      <span className={`text-[11px] font-black uppercase tracking-widest ${active ? 'text-white' : color}`}>{label}</span>
+      <span className={`text-[11px] font-black uppercase tracking-widest ${active ? 'text-black' : color}`}>{label}</span>
 
       {urgent && (
         <span className="flex h-2 w-2 absolute right-4">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pitch-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-pitch-500"></span>
         </span>
       )}
 
-      {active && <div className="absolute right-0 w-1 h-8 bg-white rounded-l-full"></div>}
+      {active && <div className="absolute right-0 w-1 h-8 bg-black rounded-l-full"></div>}
     </button>
   );
 }
@@ -537,18 +590,18 @@ function NavButton({ active, onClick, icon, label, urgent = false, color = "text
   return (
     <button
       onClick={onClick}
-      className={`flex flex-col items-center justify-center w-12 h-12 rounded-2xl transition-all relative ${active ? 'bg-red-600 text-white scale-110 -translate-y-2' : 'text-neutral-500 opacity-60'}`}
+      className={`flex flex-col items-center justify-center w-12 h-12 rounded-2xl transition-all relative ${active ? 'bg-gold text-black scale-110 -translate-y-2' : 'text-neutral-500 opacity-60'}`}
     >
       {urgent && (
         <span className="absolute -top-1 -right-1 flex h-3 w-3">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border border-black"></span>
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pitch-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-3 w-3 bg-pitch-500 border border-black"></span>
         </span>
       )}
       <span className="text-xl">{icon}</span>
-      <span className={`text-[7px] font-black uppercase mt-1 ${active ? 'text-white' : color}`}>{label}</span>
+      <span className={`text-[7px] font-black uppercase mt-1 ${active ? 'text-black' : color}`}>{label}</span>
       {active && (
-        <div className="absolute -bottom-4 w-1.5 h-1.5 bg-red-600 rounded-full"></div>
+        <div className="absolute -bottom-4 w-1.5 h-1.5 bg-gold rounded-full"></div>
       )}
     </button>
   );

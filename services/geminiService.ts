@@ -1,14 +1,14 @@
 /// <reference types="vite/client" />
 import OpenAI from "openai";
 
-const SYSTEM_INSTRUCTION = `Você é o narrador oficial do FUT DOS PERNAS DE PAU, uma pelada de várzea no Espírito Santo cheia de maconheiro, bêbado e gente ruim de bola.
+const SYSTEM_INSTRUCTION = `Você é o narrador oficial do BALAIO DE GATO FC, um time de futebol de campo de Cariacica-ES, famoso pela resenha e pela amizade.
 SEU ESTILO:
-- Favelado, boca suja, agressivo e sem frescura.
-- Use MUITA gíria de quebrada, palavrão (pode censurar levemente se precisar, tipo p*rra), e referências a cachaça, cigarro, dívida e polícia.
-- Se o cara for ruim, humilhe. Diga que ele usa droga estragada, que tá de ressaca, que tem dois pés esquerdos.
-- NÃO SEJA "JOGADOR DE CONDOMÍNIO". Você é da lama.
-- Se alguém falar "bom dia", mande tomar no c*.
-- O tom é de humilhação e zoeira pesada, humor negro sobre a desgraça alheia (mas evite racismo/xenofobia explícita pra não cair o servidor, foca na ofensa pessoal e na ruindade).`;
+- Bem-humorado, descontraído, com gíria leve de futebol de campo e resenha de amigos.
+- Pode zoar de leve quem jogou mal e exaltar quem foi bem, sempre na brincadeira saudável.
+- NADA de palavrão pesado, ofensa de verdade, racismo, xenofobia, drogas ou violência. É zoeira de vestiário, não humilhação.
+- Trate os jogadores como "sócios", "parceiros", "fera", "craque", "monstro".
+- Use o universo do clube: gato/balaio, campo, gol de placa, caneta, chapéu, resenha, churrasco, mensalidade.
+- Tom carismático de comentarista de pelada de campo que ama o clube. Curto e divertido.`;
 
 const getOpenAIClient = () => {
   return new OpenAI({
@@ -25,11 +25,11 @@ export const aiService = {
       messages: [
         { role: "system", content: SYSTEM_INSTRUCTION },
         {
-          role: "user", content: `Gere uma exaltação exagerada (tipo "o rei da boca") para o MENOS PIOR DA PELADA.
-          Vagabundo: ${name}
+          role: "user", content: `Gere uma exaltação animada e exagerada para o CRAQUE DA RODADA do Balaio de Gato FC.
+          Sócio: ${name}
           Posição: ${position}
           O que fez: ${stats}
-          Regras: Max 3 frases, gíria de favela, fala que ele tá "na onda" ou "puro ódio".` }
+          Regras: Max 3 frases, gíria leve de resenha, chame de fera/monstro/diferenciado.` }
       ]
     });
     return response.choices[0].message.content || "";
@@ -42,10 +42,10 @@ export const aiService = {
       messages: [
         { role: "system", content: SYSTEM_INSTRUCTION },
         {
-          role: "user", content: `Humilhe o PIOR DA PELADA.
-          Lixo: ${name}
-          Cagadas: ${errors}
-          Regras: Max 2 frases, fala que ele usou droga vencida, tá bêbado ou é um inútil.` }
+          role: "user", content: `Zoe de leve, na brincadeira, o que jogou MENOS NA RODADA do Balaio.
+          Sócio: ${name}
+          Vacilos: ${errors}
+          Regras: Max 2 frases, zoeira leve de vestiário, sem ofensa pesada. Tipo "deixou a perna esquerda em casa".` }
       ]
     });
     return response.choices[0].message.content || "";
@@ -70,12 +70,12 @@ export const aiService = {
       messages: [
         { role: "system", content: SYSTEM_INSTRUCTION },
         {
-          role: "user", content: `Narre o sorteio dos times.
-          Bonde A: ${teamA.join(', ')}
-          Bonde B: ${teamB.join(', ')}
-          Bonde C: ${teamC.join(', ')}
-          ${teamD ? `Bonde D: ${teamD.join(', ')}` : ''}
-          Fale qual time vai dar W.O. por overdose, qual vai brigar e qual é horrível.` }
+          role: "user", content: `Narre o sorteio dos times do Balaio de Gato FC com bom humor.
+          Time A: ${teamA.join(', ')}
+          Time B: ${teamB.join(', ')}
+          Time C: ${teamC.join(', ')}
+          ${teamD ? `Time D: ${teamD.join(', ')}` : ''}
+          Aponte de leve qual time saiu mais forte, qual é o azarão e brinque com a resenha. Sem ofensa pesada.` }
       ]
     });
     return response.choices[0].message.content || "";
@@ -87,7 +87,7 @@ export const aiService = {
       model: "gpt-4o-mini",
       messages: [
         { role: "system", content: SYSTEM_INSTRUCTION },
-        { role: "user", content: `O vagabundo ${name} desbloqueou: ${badgeName}. Zoa ele.` }
+        { role: "user", content: `O sócio ${name} desbloqueou a conquista: ${badgeName}. Comemore com bom humor e zoeira leve.` }
       ]
     });
     return response.choices[0].message.content || "";
@@ -99,7 +99,7 @@ export const aiService = {
       model: "gpt-4o-mini",
       messages: [
         { role: "system", content: SYSTEM_INSTRUCTION },
-        { role: "user", content: `O nóia do ${userName} falou: "${userMessage}". Responda na lata, xingando ou zoando.` }
+        { role: "user", content: `O sócio ${userName} falou na resenha: "${userMessage}". Responda na hora, com zoeira leve e bom humor do clube.` }
       ]
     });
     return response.choices[0].message.content || "";
@@ -110,16 +110,16 @@ export const aiService = {
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: "Aja como um participante de um grupo de futebol de várzea. Informalidade extrema." },
+        { role: "system", content: "Aja como um participante do grupo do Balaio de Gato FC. Informal e brincalhão, sem ofensa pesada." },
         {
-          role: "user", content: `Você está interpretando o jogador de várzea "${responderName}".
+          role: "user", content: `Você está interpretando o jogador "${responderName}" do Balaio de Gato FC.
           Seus dados: ${responderStats}.
-          
-          Situação: O jogador "${authorName}" mandou no grupo do Zap: "${targetMessage}".
-          
+
+          Situação: O sócio "${authorName}" mandou no grupo: "${targetMessage}".
+
           Tarefa: Responda essa mensagem COMO SE FOSSE O ${responderName}.
-          Estilo: Curto, gíria de favela, erro de português proposital (tipo "ta lgd", "fml"), agressivo ou zoeiro.
-          Se você for goleiro e tomou gol, seja defensivo. Se for perna de pau, disfarça.
+          Estilo: Curto, informal, abreviações de WhatsApp (tipo "tlgd", "kkk"), zoeira leve e amigável.
+          Se você for goleiro e tomou gol, se defenda na brincadeira. Sem palavrão pesado.
           NÃO ASSINE A MENSAGEM. SÓ O TEXTO.` }
       ]
     });
@@ -158,17 +158,17 @@ export const aiService = {
     const openai = getOpenAIClient();
     const isHero = moralScore > 75;
     const task = isHero
-      ? `Escreva um parágrafo de "exaltação suprema". O cara é o craque. Use gíria de respeito, chame de gênio, ídolo, diferenciado. O tom deve ser de admiração extrema.`
-      : `Escreva um parágrafo de "dossiê de inteligência" esculachando o estilo de jogo dele. Seja criativo, maldoso e use gíria de esculacho.`;
+      ? `Escreva um parágrafo de exaltação. O sócio é craque. Chame de gênio, ídolo, diferenciado. Tom de admiração e carinho pelo clube.`
+      : `Escreva um parágrafo de "dossiê" comentando o estilo de jogo dele com zoeira leve e bem-humorada, sem ofensa pesada.`;
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         { role: "system", content: SYSTEM_INSTRUCTION },
         {
-          role: "user", content: `Analise o jogador ${name}. 
+          role: "user", content: `Analise o sócio ${name} do Balaio de Gato FC.
           Estatísticas: ${stats}
-          Contexto de Atos Memoráveis/Vexames da semana: ${manualEvents || 'Nenhuma presepada registrada ainda.'}
+          Contexto de momentos memoráveis da rodada: ${manualEvents || 'Nada marcante registrado ainda.'}
           Tarefa: ${task}
           Máximo 40 palavras.` }
       ]

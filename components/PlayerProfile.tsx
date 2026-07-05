@@ -168,7 +168,7 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
         .eq('id', player.id);
 
     } catch (e) {
-      setAiAnalysis("Sindicato dos Bagres em greve.");
+      setAiAnalysis("Análise indisponível no momento.");
     } finally {
       setLoadingAi(false);
     }
@@ -239,7 +239,7 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
   };
   const handleAddHeritage = async () => {
     if (!newHeritage.title || !tempFile) {
-      alert("Dá um título e escolhe a foto, bagre!");
+      alert("Dá um título e escolhe a foto, parceiro!");
       return;
     }
 
@@ -325,7 +325,7 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
       })();
 
       await Promise.race([uploadTask, timeout]);
-      alert("Sucesso! Sua glória foi eternizada.");
+      alert("Pronto! Mais um momento guardado na história do Balaio.");
     } catch (err: any) {
       console.error("Erro no handleAddHeritage:", err);
       alert(err.message || "Erro desconhecido ao salvar.");
@@ -344,7 +344,7 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
   };
 
   const handleDeleteHeritage = async (id: string, photoUrl: string) => {
-    if (!window.confirm("Certeza que quer apagar essa memória, fracassado?")) return;
+    if (!window.confirm("Tem certeza que quer apagar essa memória?")) return;
 
     try {
       // 1. Deletar do Banco
@@ -380,7 +380,7 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
   const handleReportHumiliation = async (type: 'caneta' | 'chapeu' | 'humilhacao') => {
     if (!currentUser) return;
     if (currentUser.id === player.id) {
-      alert("Se auto-elogiar é coisa de fracassado.");
+      alert("Não dá pra registrar um lance em você mesmo. 😄");
       return;
     }
 
@@ -393,18 +393,25 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
     }]);
 
     if (!error) {
-      alert("FEITO REPORTADO! O ADM vai julgar se é verdade ou choro.");
+      alert("Lance enviado! A diretoria vai conferir e registrar na resenha.");
       setReportDescription("");
       setShowReportForm(null);
     } else {
       console.error(error);
-      alert("Erro ao reportar. O bueiro tá entupido.");
+      alert("Erro ao enviar. Tenta de novo daqui a pouco.");
     }
   };
 
   const isElite = player.moralScore >= 80;
   const trophies = heritageItems.filter(h => h.type === 'trophy');
   const album = heritageItems.filter(h => h.type === 'album');
+
+  // Antiguidade no Balaio (orgulho da casa)
+  const memberSince = player.member_since ? new Date(player.member_since) : null;
+  const seniorityYears = memberSince
+    ? Math.floor((Date.now() - memberSince.getTime()) / (365.25 * 24 * 3600 * 1000))
+    : null;
+  const isVeteran = (seniorityYears ?? 0) >= 5;
 
   return (
     <div className={`relative overflow-hidden transition-all duration-700 border-b pb-20 ${isElite ? 'border-yellow-600/30 bg-gradient-to-r from-black via-yellow-900/5 to-black' : 'border-neutral-900 bg-black'}`}>
@@ -413,16 +420,16 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
       {isEditing && (
         <div className="fixed inset-0 z-[100] bg-black/95 p-6 overflow-y-auto backdrop-blur-xl animate-in fade-in duration-300 no-scrollbar">
           <div className="max-w-2xl mx-auto space-y-8 pt-10 pb-20">
-            <h2 className="text-4xl font-oswald font-black text-red-600 italic uppercase">Dashboard do Viciado</h2>
+            <h2 className="text-4xl font-oswald font-black text-gold italic uppercase">Editar meu perfil</h2>
 
             {/* Pensamento */}
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Pensamento de Elite (Frase de Efeito)</label>
+              <label className="text-xs font-black text-neutral-400 uppercase tracking-widest">Sua frase (aparece no perfil)</label>
               <textarea
                 value={thought}
                 onChange={e => setThought(e.target.value)}
-                className="w-full bg-neutral-900 border border-neutral-800 p-4 font-mono text-sm text-white focus:border-red-600 outline-none h-24"
-                placeholder="Ex: No bueiro, quem tem um olho é rei."
+                className="w-full bg-neutral-900 border border-neutral-800 p-4 font-mono text-sm text-white focus:border-gold outline-none h-24"
+                placeholder="Ex: Aqui o que vale é a resenha."
               />
             </div>
 
@@ -456,8 +463,8 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
                     }
                   }}
                 />
-                <div className="text-[9px] font-mono text-neutral-500 italic max-w-xs">
-                  Sua cara é seu cartão de visitas na biqueira. Capricha na foto ou vai virar meme.
+                <div className="text-xs font-mono text-neutral-400 italic max-w-xs">
+                  Capriche na foto: é assim que a galera te reconhece no Balaio.
                 </div>
               </div>
             </div>
@@ -487,7 +494,7 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
 
             {/* Adicionar Heritage NATIVO */}
             <div className="p-6 bg-red-950/10 border border-red-900/30 space-y-5 rounded-sm">
-              <label className="text-[10px] font-black text-red-500 uppercase tracking-widest block">Imortalizar Momento (Foto Real)</label>
+              <label className="text-xs font-black text-gold uppercase tracking-widest block">Guardar um momento (foto)</label>
 
               <div className="space-y-4">
                 <input
@@ -563,7 +570,7 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                       ETERNAIZANDO...
                     </>
-                  ) : 'GRAVAR NO LEGADO DO FDP'}
+                  ) : 'GUARDAR NA HISTÓRIA DO BALAIO'}
                 </button>
               </div>
             </div>
@@ -571,13 +578,13 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
             <div className="grid grid-cols-2 gap-4 pb-12">
               <button
                 onClick={() => { setIsEditing(false); setTempPreview(null); setTempFile(null); }}
-                className="border border-neutral-800 py-4 text-xs font-black text-neutral-600 uppercase hover:bg-neutral-900 transition-all"
-              >Arregar (Cancelar)</button>
+                className="border border-neutral-800 py-4 text-xs font-black text-neutral-400 uppercase hover:bg-neutral-900 transition-all"
+              >Cancelar</button>
               <button
                 onClick={handleSaveProfile}
                 disabled={isSaving}
-                className="bg-white text-black py-4 text-xs font-black uppercase hover:bg-neutral-200 transition-all"
-              >Salvar Pensamento & Badges</button>
+                className="bg-gold text-black py-4 text-xs font-black uppercase hover:bg-gold-600 transition-all"
+              >Salvar perfil</button>
             </div>
           </div>
         </div>
@@ -634,20 +641,35 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
               })}
             </div>
 
+            {/* ANTIGUIDADE NO BALAIO (orgulho da casa) */}
+            {memberSince && (
+              <div className="flex justify-center md:justify-start">
+                <div className={`inline-flex items-center gap-3 rounded-2xl border px-5 py-3 ${isVeteran ? 'border-gold/50 bg-gold/10' : 'border-neutral-700 bg-neutral-900/50'}`}>
+                  <span className="text-2xl">{isVeteran ? '🏅' : '📅'}</span>
+                  <div className="text-left leading-tight">
+                    <p className={`font-oswald font-black uppercase italic text-lg ${isVeteran ? 'text-gold' : 'text-white'}`}>
+                      {seniorityYears && seniorityYears > 0 ? `${seniorityYears} ${seniorityYears === 1 ? 'ano' : 'anos'} de Balaio` : 'Sócio novo do Balaio'}
+                    </p>
+                    <p className="text-xs text-neutral-400">No clube desde {memberSince.getFullYear()}{isVeteran ? ' • Veterano' : ''}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-col md:flex-row gap-4 pt-4">
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
                 className={`px-10 py-4 font-oswald font-black uppercase tracking-widest transition-all text-sm border-2 ${isElite ? 'bg-yellow-600 hover:bg-black text-black hover:text-yellow-500 border-yellow-600' : 'bg-neutral-800 hover:bg-white text-white hover:text-black border-neutral-700'}`}
               >
-                {isExpanded ? 'Recolher Arquivo ↑' : 'Abrir Dossiê Total ↓'}
+                {isExpanded ? 'Ver menos ↑' : 'Ver detalhes ↓'}
               </button>
 
               {isOwner && (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="px-10 py-4 bg-white text-black font-oswald font-black uppercase tracking-widest text-sm hover:bg-red-700 hover:text-white transition-all shadow-[0_0_30px_rgba(255,255,255,0.1)]"
+                  className="px-10 py-4 bg-gold text-black font-oswald font-black uppercase tracking-widest text-sm hover:bg-gold-600 transition-all"
                 >
-                  Personalizar Perfil ⚙️
+                  Editar meu perfil ⚙️
                 </button>
               )}
 
@@ -668,9 +690,9 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
                       >👒 CHAPÉU!</button>
                       <button
                         onClick={() => setShowReportForm('humilhacao')}
-                        className="p-4 bg-black border-2 border-red-900/50 text-red-600 hover:bg-red-900 hover:text-white transition-all text-xs font-black uppercase italic"
-                        title="Humilhação Geral"
-                      >💀 HUMILHOU</button>
+                        className="p-4 bg-black border-2 border-gold/40 text-gold hover:bg-gold hover:text-black transition-all text-xs font-black uppercase italic"
+                        title="Lance pra resenha"
+                      >🔥 RESENHA</button>
                     </div>
                   ) : (
                     <div className="bg-neutral-900 border border-red-900/30 p-4 space-y-3 animate-in fade-in slide-in-from-top-2">
@@ -705,12 +727,12 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
           {/* DOSSIÊ E RADAR */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16 border-t border-neutral-900 pt-16">
             <div className="relative p-8 bg-neutral-900/50 border border-red-900/10 rounded-sm">
-              <div className="absolute -top-4 left-8 px-4 py-1 bg-red-600 text-[10px] font-black text-white uppercase tracking-widest font-mono skew-x-[-10deg]">Vantablack Intelligence</div>
-              <div className="text-neutral-400 font-mono text-base leading-relaxed mt-4">
+              <div className="absolute -top-4 left-8 px-4 py-1 bg-gold text-[10px] font-black text-black uppercase tracking-widest font-mono skew-x-[-10deg]">Análise do Sócio</div>
+              <div className="text-neutral-300 font-mono text-base leading-relaxed mt-4">
                 {loadingAi ? (
                   <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 bg-red-600 rounded-full animate-ping"></div>
-                    <span className="uppercase font-black text-xs text-neutral-600">Sondando a ruindade do elemento...</span>
+                    <div className="w-3 h-3 bg-gold rounded-full animate-ping"></div>
+                    <span className="uppercase font-black text-xs text-neutral-500">Analisando o sócio...</span>
                   </div>
                 ) : <p className="italic border-l-2 border-neutral-800 pl-6">"{aiAnalysis}"</p>}
               </div>
@@ -742,7 +764,7 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
                 </div>
                 <div className="bg-neutral-900/30 p-5 border border-neutral-800 relative overflow-hidden group">
                   <div className="absolute top-0 right-0 w-16 h-16 bg-red-600/5 -mr-8 -mt-8 rotate-45 transition-all group-hover:bg-red-600/10"></div>
-                  <p className="text-[9px] text-red-600 uppercase font-black mb-1 tracking-widest">Bagre da Semana</p>
+                  <p className="text-[9px] text-red-600 uppercase font-black mb-1 tracking-widest">Pé Frio (votos)</p>
                   <p className="text-4xl font-oswald font-black text-red-500">{player.worstVotes}</p>
                 </div>
               </div>

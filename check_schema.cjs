@@ -14,11 +14,18 @@ async function checkSchema() {
         .eq('id', 1)
         .single();
 
-    if (error) {
-        console.error('Erro ao buscar sessão:', error);
+    console.log('\nChecando colunas da tabela finances...');
+    const { data: fData, error: fError } = await supabase
+        .from('finances')
+        .select('*')
+        .eq('id', 1)
+        .single();
+
+    if (fError) {
+        console.error('Erro ao buscar finanças:', fError);
     } else {
-        console.log('Sessão encontrada. Colunas:', Object.keys(data));
-        console.log('Dados:', data);
+        console.log('Finanças encontradas. Colunas:', Object.keys(fData));
+        console.log('Dados:', fData);
     }
 }
 

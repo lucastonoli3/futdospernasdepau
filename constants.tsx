@@ -7,24 +7,24 @@ export const ALL_BADGES: Badge[] = [
   // --- LEGADO, HONRA & AUTORIDADE (TOP TIER) ---
   { id: 'teg1', name: 'TEG - Esquadrão Grená', icon: '/badges/teg.png', description: 'Espancador de rio branquense. Traje de gala é a peita da organizada.', category: 'Elite' },
   { id: 'leg1', name: 'Fundador da Pelada', icon: '👑', description: 'O patriarca que começou tudo isso aqui. Respeite o ancião.', category: 'Elite' },
-  { id: 'leg2', name: 'Administrador da Biqueira', icon: '👮‍♂️', description: 'Quem manda nessa porra. A palavra final é dele.', category: 'Elite' },
+  { id: 'leg2', name: 'Presidente do Clube', icon: '👔', description: 'Quem comanda o Balaio. A palavra final é dele.', category: 'Elite' },
   { id: 'leg3', name: 'Bola de Ouro Suprema', icon: '🥇', description: 'O ápice da excelência técnica e moral. O melhor dos melhores.', category: 'Elite' },
-  { id: 'dev1', name: 'Mago do Código', icon: '🧙‍♂️', description: 'O mago que fez essa porra toda, o mágico da programação', category: 'Architect' },
-  { id: 'leg4', name: 'Sócio Vitalício', icon: '🎟️', description: 'Parte inseparável da história desse bueiro.', category: 'Elite' },
-  { id: 'leg5', name: 'Embaixador da Várzea', icon: '🌍', description: 'Leva o nome do FDP por onde passa.', category: 'Elite' },
+  { id: 'dev1', name: 'Mago do Código', icon: '🧙‍♂️', description: 'O mago que programou todo este sistema do Balaio.', category: 'Architect' },
+  { id: 'leg4', name: 'Sócio Vitalício', icon: '🎟️', description: 'Parte inseparável da história desse Balaio.', category: 'Elite' },
+  { id: 'leg5', name: 'Embaixador da Várzea', icon: '🌍', description: 'Leva o nome do Balaio por onde passa.', category: 'Elite' },
 
   // --- ORIGINAIS & FUNDAMENTAIS ---
   { id: 'b1', name: 'Chegou Agora', icon: '👶', description: 'Acabou de brotar. Fica esperto pra não virar saudade.', category: 'Geral' },
   { id: 'b9', name: 'Sobrevivente', icon: '💀', description: 'Jogou a primeira sem vomitar nem apanhar.', category: 'Geral' },
   { id: 'b2', name: 'Sócio da Boca', icon: '🖐️', description: '5 peladas. Já deve dinheiro pra todo mundo.', category: 'Geral' },
-  { id: 'b3', name: 'Procurado', icon: '🚔', description: 'Sumiu. Ou tá preso ou tá devendo pensão.', category: 'Geral' },
-  { id: 'b4', name: 'Zumbi', icon: '🧟', description: 'Ressuscitou das cinzas cheio de cachaça.', category: 'Geral' },
+  { id: 'b3', name: 'Sumido', icon: '🕵️', description: 'Sumiu faz tempo. Cadê esse sócio na resenha?', category: 'Geral' },
+  { id: 'b4', name: 'Ressuscitado', icon: '🧟', description: 'Voltou das cinzas cheio de disposição.', category: 'Geral' },
   { id: 'b5', name: 'Pulmão de Filtro', icon: '🚬', description: 'Não corre 2 metros, só fica fumando na beira do campo.', category: 'Geral' },
   { id: 'b6', name: 'Perna de Pau', icon: '🪵', description: 'É ruim com força. Dá desgosto de ver.', category: 'Geral' },
   { id: 'b7', name: 'Dono da Várzea', icon: '👑', description: '100 jogos. O fígado já pediu demissão.', category: 'Geral' },
   { id: 'b8', name: 'Chorão', icon: '😭', description: 'Reclama de tudo. Acha que tá na Champions, seu lixo?', category: 'Geral' },
   { id: 'sp_unique_brow', name: 'Brow Único', icon: '/badges/no-monkey.png', description: 'Macacos são proibidos na pelada, mas o brow é UNICO!', category: 'Elite' },
-  { id: 'mk1', name: 'Mesmo proibido ele esta presente na pelada', icon: '/badges/no-monkey.png', description: 'Ele viu tudo, mas não vai falar nada. O infiltrado do bueiro.', category: 'Elite' },
+  { id: 'mk1', name: 'Mesmo proibido ele esta presente na pelada', icon: '/badges/no-monkey.png', description: 'Ele viu tudo, mas não vai falar nada. O infiltrado do Balaio.', category: 'Elite' },
 
   // --- PRESENÇA & FIDELIDADE ---
   { id: 'pres1', name: 'Calouro do Bueiro', icon: '👶', description: 'Veio na primeira pelada. Não morreu ainda.', category: 'Geral' },
@@ -70,7 +70,7 @@ export const ALL_BADGES: Badge[] = [
   { id: 'fin4', name: 'Patrocinador Master', icon: '🏦', description: 'Pagou o churrasco sozinho uma vez.', category: 'Geral' },
   { id: 'fin5', name: 'Inimigo do Pix', icon: '📱', description: 'O celular sempre "trava" na hora de pagar.', category: 'Geral' },
   { id: 'fin6', name: 'Boleto Vencido', icon: '📄', description: 'Vive prometendo pagar "amanhã".', category: 'Geral' },
-  { id: 'fin7', name: 'Tesoureiro Assistente', icon: '💰', description: 'Ajuda o ADM a cobrar os outros caloteiros.', category: 'Geral' },
+  { id: 'fin7', name: 'Tesoureiro Assistente', icon: '💰', description: 'Ajuda o ADM a cobrar os outros atrasados.', category: 'Geral' },
   { id: 'fin8', name: 'Mão Aberta', icon: '🤲', description: 'Pagou a pelada de um amigo que tava sem grana.', category: 'Geral' },
   { id: 'fin9', name: 'Pão Duro de Ouro', icon: '🥖', description: 'Não paga nem a água que bebe.', category: 'Geral' },
   { id: 'fin10', name: 'Magnata da Várzea', icon: '💎', description: 'Sempre traz notas de 100 pra pagar 20 reais.', category: 'Geral' },
@@ -94,12 +94,12 @@ export const ALL_BADGES: Badge[] = [
 
   // --- HABILIDADE: ATAQUE (LOG DE FEITOS) ---
   { id: 'atk1', name: 'Matador de Aluguel', icon: '🎯', description: 'Tocou na bola dentro da área? É gol.', category: 'Linha' },
-  { id: 'atk2', name: 'Mestre das Canetas', icon: '🖊️', description: 'O rei do bueiro. 3 canetas no mesmo jogo.', category: 'Linha' },
+  { id: 'atk2', name: 'Mestre das Canetas', icon: '🖊️', description: 'O rei do Balaio. 3 canetas no mesmo jogo.', category: 'Linha' },
   { id: 'cn1', name: 'Caneteiro Nível 1', icon: '🖊️', description: 'Deu sua primeira caneta oficial.', category: 'Linha' },
   { id: 'cn5', name: 'Caneteiro Nível 5', icon: '🖊️', description: 'Já distribuiu 5 canetas. Tá ficando abusado.', category: 'Linha' },
   { id: 'cn10', name: 'Caneteiro Nível 10', icon: '💉', description: '10 canetas. Os adversários fecham a perna quando você chega.', category: 'Linha' },
   { id: 'cn20', name: 'Caneteiro Nível 20', icon: '🪄', description: '20 canetas. Mestre da mágica entre as pernas.', category: 'Linha' },
-  { id: 'cn50', name: 'Lenda das Canetas', icon: '👑', description: '50 canetas. Você é o terror do bueiro.', category: 'Linha' },
+  { id: 'cn50', name: 'Lenda das Canetas', icon: '👑', description: '50 canetas. Você é o terror do Balaio.', category: 'Linha' },
 
   { id: 'ch1', name: 'Dono do Chapéu', icon: '👒', description: 'Deu seu primeiro chapéu oficial.', category: 'Linha' },
   { id: 'ch5', name: 'Chapeleiro Maluco', icon: '🎩', description: '5 chapéus distribuídos. Joga com a bola no alto.', category: 'Linha' },
@@ -159,7 +159,7 @@ export const ALL_BADGES: Badge[] = [
   { id: 'fr1', name: 'Frangueiro Profissional', icon: '🥚', description: 'O primeiro frango a gente nunca esquece.', category: 'Goleiro' },
   { id: 'fr5', name: 'Granja do Bueiro', icon: '🐣', description: '5 frangos confirmados. O time já nem confia mais.', category: 'Goleiro' },
   { id: 'gl3', name: 'Goleiro Voador', icon: '🦅', description: 'Se joga em todas as bolas, até nas fora.', category: 'Goleiro' },
-  { id: 'gl4', name: 'Muralha do Crime', icon: '🚧', description: 'Incontestável. Fechou o bueiro.', category: 'Goleiro' },
+  { id: 'gl4', name: 'Muralha do Crime', icon: '🚧', description: 'Incontestável. Fechou o Balaio.', category: 'Goleiro' },
   { id: 'gl5', name: 'Assustador de Atacante', icon: '👹', description: 'O cara fica com medo de chutar.', category: 'Goleiro' },
   { id: 'gl6', name: 'Lançador de Elite', icon: '🏹', description: 'Coloca o atacante na cara do gol com a mão.', category: 'Goleiro' },
   { id: 'gl7', name: 'Pegador de Pênalti', icon: '🛑', description: 'O pesadelo dos batedores.', category: 'Goleiro' },
@@ -180,7 +180,7 @@ export const ALL_BADGES: Badge[] = [
   // --- BAGRE & VERGONHA (VITIMAS) ---
   { id: 'bg1', name: 'Bagre de Platina', icon: '🐟', description: 'Atingiu um nível de ruindade sobre-humano.', category: 'Geral' },
   { id: 'vt_cn1', name: 'Passarela de Caneta', icon: '🦵', description: 'Tomou a primeira caneta oficial. Fecha as perna!', category: 'Geral' },
-  { id: 'vt_cn5', name: 'Túnel do Metrô', icon: '🚇', description: 'Tomou 5 canetas. Já virou atração turística do bueiro.', category: 'Geral' },
+  { id: 'vt_cn5', name: 'Túnel do Metrô', icon: '🚇', description: 'Tomou 5 canetas. Já virou atração turística do Balaio.', category: 'Geral' },
   { id: 'vt_ch1', name: 'Olhou pro Céu', icon: '🪁', description: 'Levou um chapéu e ficou procurando a bola.', category: 'Geral' },
   { id: 'vt_db1', name: 'No Chão', icon: '📉', description: 'Foi driblado e ficou sentado no gramado.', category: 'Geral' },
   { id: 'bg2', name: 'Inimigo da Bola', icon: '🚫', description: 'A bola foge dele como se fosse o diabo.', category: 'Geral' },
@@ -253,15 +253,15 @@ export const ALL_BADGES: Badge[] = [
   { id: 'vb1', name: 'Essência de Vantablack', icon: '🌑', description: 'Entendeu o espírito da ruindade.', category: 'Architect' },
   { id: 'vb2', name: 'Sombra do Bueiro', icon: '👤', description: 'Vê tudo, ouve tudo, joga nada.', category: 'Architect' },
   { id: 'vb3', name: 'Cavaleiro das Trevas', icon: '🦇', description: 'Joga melhor sob pressão e xingamentos.', category: 'Architect' },
-  { id: 'st1', name: 'Gol de Placa', icon: '🏙️', description: 'Fez um gol que merecia placa no bueiro.', category: 'Linha' },
+  { id: 'st1', name: 'Gol de Placa', icon: '🏙️', description: 'Fez um gol que merecia placa no Balaio.', category: 'Linha' },
   { id: 'st2', name: 'Defesa do Século', icon: '🧤', description: 'Pegou uma bola que já tava dentro.', category: 'Goleiro' },
 
   // --- LEGADO & AUTORIDADE (TOP TIER) ---
   { id: 'leg1', name: 'Fundador da Pelada', icon: '👑', description: 'O patriarca que começou tudo isso aqui. Respeite o ancião.', category: 'Elite' },
-  { id: 'leg2', name: 'Administrador da Biqueira', icon: '👮‍♂️', description: 'Quem manda nessa porra. A palavra final é dele.', category: 'Elite' },
+  { id: 'leg2', name: 'Presidente do Clube', icon: '👔', description: 'Quem comanda o Balaio. A palavra final é dele.', category: 'Elite' },
   { id: 'leg3', name: 'Bola de Ouro Suprema', icon: '🥇', description: 'O ápice da excelência técnica e moral. O melhor dos melhores.', category: 'Elite' },
-  { id: 'leg4', name: 'Sócio Vitalício', icon: '🎟️', description: 'Parte inseparável da história desse bueiro.', category: 'Elite' },
-  { id: 'leg5', name: 'Embaixador da Várzea', icon: '🌍', description: 'Leva o nome do FDP por onde passa.', category: 'Elite' },
+  { id: 'leg4', name: 'Sócio Vitalício', icon: '🎟️', description: 'Parte inseparável da história desse Balaio.', category: 'Elite' },
+  { id: 'leg5', name: 'Embaixador da Várzea', icon: '🌍', description: 'Leva o nome do Balaio por onde passa.', category: 'Elite' },
 
   // --- MAGIA & TÉCNICA (GOOD BADGES) ---
   { id: 'mg1', name: 'Rabiscador', icon: '🖌️', description: 'Desenha a jogada no chão. Arte pura.', category: 'Linha' },
@@ -296,7 +296,7 @@ export const ALL_BADGES: Badge[] = [
   { id: 'gl1f', name: 'Mestre do Sem-Pulo', icon: '👟', description: 'Pega de primeira e fura a rede.', category: 'Linha' },
   { id: 'gl1g', name: 'Cabeceador de Ouro', icon: '📀', description: 'Imbatível no jogo aéreo ofensivo.', category: 'Linha' },
   { id: 'gl1h', name: 'Rei do Rebote', icon: '🦊', description: 'Oportunista nato. Não perdoa erro da defesa.', category: 'Linha' },
-  { id: 'gl1i', name: 'Canhão da Biqueira', icon: '💥', description: 'Chute potente que assusta até o juiz.', category: 'Linha' },
+  { id: 'gl1i', name: 'Canhão da Balaio', icon: '💥', description: 'Chute potente que assusta até o juiz.', category: 'Linha' },
   { id: 'gl1j', name: 'Matador Frio', icon: '🧊', description: 'Na cara do gol, ele nunca treme.', category: 'Linha' },
 
   // --- LIDERANÇA & SOCIAL ---
@@ -361,7 +361,7 @@ export const ALL_BADGES: Badge[] = [
 
   // --- SOCIAL & RESENHA POSITIVA ---
   { id: 'spp1', name: 'Cervejeiro de Honra', icon: '🍻', description: 'Traz a gelada e a alegria pro pós-jogo.', category: 'Geral' },
-  { id: 'spp2', name: 'Alma da Biqueira', icon: '🎭', description: 'Essencial pra resenha ser boa.', category: 'Geral' },
+  { id: 'spp2', name: 'Alma da Balaio', icon: '🎭', description: 'Essencial pra resenha ser boa.', category: 'Geral' },
   { id: 'spp3', name: 'Conselheiro da Várzea', icon: '👴', description: 'Sempre tem uma palavra sobre o jogo e a vida.', category: 'Geral' },
   { id: 'spp4', name: 'Fotógrafo Oficial', icon: '📸', description: 'Garante que os feitos sejam registrados.', category: 'Geral' },
   { id: 'spp5', name: 'Rei do Churrasco Especial', icon: '🔥🥩', description: 'Garante a proteína da nossa sobrevivência.', category: 'Geral' },
@@ -379,8 +379,8 @@ export const ALL_BADGES: Badge[] = [
   { id: 'exx10', name: 'Lenda Urbana Infinita', icon: '🏙️', description: 'Aruína dos adversários, glória dos aliados.', category: 'Elite' },
   { id: 'exx11', name: 'Finta de Corpo Genial', icon: '🕺', description: 'Dribla sem tocar na bola.', category: 'Linha' },
   { id: 'exx12', name: 'Controle de Grupo Supremo', icon: '📣', description: 'Sabe acalmar os ânimos exaltados.', category: 'Geral' },
-  { id: 'exx13', name: 'Passe de Trivela Magistral', icon: '🌀', description: 'Estilo Quaresma no bueiro.', category: 'Linha' },
-  { id: 'exx14', name: 'Amigo do ADM de Luxo', icon: '🍹', description: 'Tem privilégios reais na biqueira.', category: 'Geral' },
+  { id: 'exx13', name: 'Passe de Trivela Magistral', icon: '🌀', description: 'Estilo Quaresma no Balaio.', category: 'Linha' },
+  { id: 'exx14', name: 'Amigo do ADM de Luxo', icon: '🍹', description: 'Tem privilégios reais na Balaio.', category: 'Geral' },
   { id: 'exx15', name: 'Infiltrado de Elite Invisível', icon: '👻', description: 'Sempre aparece livre na área.', category: 'Linha' },
   { id: 'exx16', name: 'Goleiro Líbero de Ouro', icon: '🏃‍♂️🧤', description: 'Joga com os pés melhor que muito atacante.', category: 'Goleiro' },
   { id: 'exx17', name: 'Resiliência Imortal', icon: '🧘‍♀️', description: 'Errou o gol mas fez o próximo decisivo.', category: 'Geral' },
@@ -407,7 +407,7 @@ export const ALL_BADGES: Badge[] = [
   { id: 'gx6', name: 'Guerreador do Bueiro', icon: '🛡️', description: 'Não tem medo de cara feia nem dividida.', category: 'Geral' },
   { id: 'gx7', name: 'Passador de Elite', icon: '📏', description: 'Acha o companheiro livre até no escuro.', category: 'Linha' },
   { id: 'gx8', name: 'Mestre da Retomada', icon: '🔄', description: 'Perde a bola e recupera no mesmo segundo.', category: 'Linha' },
-  { id: 'gx9', name: 'Lumina da Biqueira', icon: '✨', description: 'Sua sorte contagia o time inteiro.', category: 'Elite' },
+  { id: 'gx9', name: 'Lumina da Balaio', icon: '✨', description: 'Sua sorte contagia o time inteiro.', category: 'Elite' },
   { id: 'gx10', name: 'Inabalável', icon: '🗿', description: 'Pode estar perdendo de 10, ele continua jogando sério.', category: 'Geral' },
   { id: 'gx11', name: 'Visão Futurista', icon: '🔮', description: 'Sabe onde a bola vai sobrar antes dela espirrar.', category: 'Linha' },
   { id: 'gx12', name: 'Espírito Inquebrável', icon: '🎗️', description: 'Liderança positiva em momentos críticos.', category: 'Geral' },
@@ -418,7 +418,7 @@ export const ALL_BADGES: Badge[] = [
   { id: 'gx17', name: 'Sombra Imparável', icon: '👤', description: 'Ninguém marca ele, pois ninguém o vê chegando.', category: 'Linha' },
   { id: 'gx18', name: 'Pé de Anjo', icon: '👼', description: 'Finalizações com uma curva impossível.', category: 'Linha' },
   { id: 'gx19', name: 'Escultor de Jogadas', icon: '🔨', description: 'Constrói a vitória com paciência.', category: 'Linha' },
-  { id: 'gx20', name: 'Relíquia do FDP', icon: '🏺', description: 'Um jogador raro, técnico e leal.', category: 'Elite' },
+  { id: 'gx20', name: 'Relíquia do Balaio', icon: '🏺', description: 'Um jogador raro, técnico e leal.', category: 'Elite' },
 
   // --- EXTRA GENERATION (PARA GARANTIR 300+) ---
   // --- O LAGO DOS BAGRES (70+ NEW BADGES) ---
@@ -462,7 +462,7 @@ export const ALL_BADGES: Badge[] = [
   { id: 'bg_v38', name: 'Garçonete de Boteco', icon: '🍻', description: 'Só serve bola ruim pros companheiros.', category: 'Bagre' },
   { id: 'bg_v39', name: 'Zagueiro Pipoca de Microondas', icon: '🍿', description: 'Pula alto mas some no primeiro contato.', category: 'Bagre' },
   { id: 'bg_v40', name: 'Inimigo da Verticalidade', icon: '↔️', description: 'Sempre corta pra trás quando o gol tá livre.', category: 'Bagre' },
-  { id: 'bg_v41', name: 'Pé de Pantufa Peluda', icon: '🧸', description: 'O chute mais fofo do bueiro.', category: 'Bagre' },
+  { id: 'bg_v41', name: 'Pé de Pantufa Peluda', icon: '🧸', description: 'O chute mais fofo do Balaio.', category: 'Bagre' },
   { id: 'bg_v42', name: 'Olheiro de Gol', icon: '🧐', description: 'Só fica olhando a bola entrar sem se mexer.', category: 'Bagre' },
   { id: 'bg_v43', name: 'Mestre da Caneta Reversa', icon: '🖊️', description: 'Consegue tomar caneta até do juiz.', category: 'Bagre' },
   { id: 'bg_v44', name: 'Atleta de Slow Motion', icon: '🎞️', description: 'Parece que o jogo dele tá em 0.5x.', category: 'Bagre' },
@@ -499,7 +499,7 @@ export const ALL_BADGES: Badge[] = [
     id: `extra-${i}`,
     name: `Conquistador Nível ${i + 1}`,
     icon: '🎖️',
-    description: `Atingiu o patamar ${i + 1} de excelência na biqueira.`,
+    description: `Atingiu o patamar ${i + 1} de excelência na Balaio.`,
     category: 'Elite' as const
   }))
 ];

@@ -64,6 +64,8 @@ export interface Player {
   heritage?: HeritageItem[];
   invited_by?: string;
   is_admin?: boolean;
+  member_since?: string | null; // data de entrada no Balaio (YYYY-MM-DD)
+  ai_dossier?: string;
 }
 
 export interface MatchSession {
