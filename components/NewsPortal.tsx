@@ -243,46 +243,54 @@ const NewsPortal: React.FC<NewsPortalProps> = ({ currentUser }) => {
           </a>
         </div>
 
-        {igPosts.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {igPosts.map((url) => (
-              <div key={url} className="rounded-2xl overflow-hidden border border-gold/15 bg-neutral-900/40">
-                <blockquote
-                  className="instagram-media"
-                  data-instgrm-permalink={url}
-                  data-instgrm-version="14"
-                  data-instgrm-captioned
-                  style={{ background: '#0a0a0a', border: 0, margin: 0, width: '100%', minHeight: 380 }}
-                >
-                  {/* Fallback enquanto o embed carrega (ou se for bloqueado) */}
-                  <a href={url} target="_blank" rel="noopener noreferrer" className="block p-8 text-center text-gold font-oswald font-black uppercase italic">
-                    Ver post no Instagram ↗
-                  </a>
-                </blockquote>
-              </div>
-            ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* FEED AUTOMÁTICO — posts mais recentes do perfil, atualiza sozinho */}
+          <div className={`rounded-2xl overflow-hidden border border-gold/20 bg-white ${igPosts.length === 0 ? 'md:col-span-2 md:max-w-xl md:mx-auto md:w-full' : ''}`}>
+            <div className="bg-black px-4 py-2.5 flex items-center justify-between">
+              <p className="text-[11px] font-black uppercase tracking-widest text-gold">📷 Últimas do @{SOCIAL.instagramHandle}</p>
+              <span className="text-[10px] text-neutral-500 font-mono uppercase">atualiza sozinho</span>
+            </div>
+            <iframe
+              title={`Posts recentes de @${SOCIAL.instagramHandle}`}
+              src={`https://www.instagram.com/${SOCIAL.instagramHandle}/embed`}
+              className="w-full block"
+              style={{ height: 560, border: 0 }}
+              loading="lazy"
+              scrolling="no"
+            />
+            <a
+              href={SOCIAL.instagramUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block bg-black text-center py-3 text-[11px] font-black uppercase tracking-widest text-gold hover:bg-neutral-900 transition-all"
+            >
+              Ver perfil completo ↗
+            </a>
           </div>
-        ) : (
-          <a
-            href={SOCIAL.instagramUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block glass-panel rounded-2xl p-8 text-center border border-gold/20 hover:border-gold/50 transition-all group"
-          >
-            <span className="text-5xl block mb-3 group-hover:scale-110 transition-transform">📸</span>
-            <p className="font-oswald text-2xl font-black uppercase italic text-white">@{SOCIAL.instagramHandle}</p>
-            <p className="text-neutral-400 font-mono text-[11px] uppercase tracking-widest mt-2">
-              Siga o clube no Instagram — fotos, resultados e bastidores
-            </p>
-            <span className="inline-block mt-4 px-6 py-3 rounded-xl bg-gold text-black font-oswald font-black uppercase italic text-xs">
-              Abrir Instagram
-            </span>
-            {isAdmin && (
-              <span className="block mt-4 text-[11px] text-neutral-500 normal-case">
-                Dica da diretoria: publique um aviso com o link de um post e ele aparece incorporado aqui.
-              </span>
-            )}
-          </a>
+
+          {/* POSTS FIXADOS PELA DIRETORIA (via link nos avisos) */}
+          {igPosts.map((url) => (
+            <div key={url} className="rounded-2xl overflow-hidden border border-gold/15 bg-neutral-900/40">
+              <blockquote
+                className="instagram-media"
+                data-instgrm-permalink={url}
+                data-instgrm-version="14"
+                data-instgrm-captioned
+                style={{ background: '#0a0a0a', border: 0, margin: 0, width: '100%', minHeight: 380 }}
+              >
+                {/* Fallback enquanto o embed carrega */}
+                <a href={url} target="_blank" rel="noopener noreferrer" className="block p-8 text-center text-gold font-oswald font-black uppercase italic">
+                  Ver post no Instagram ↗
+                </a>
+              </blockquote>
+            </div>
+          ))}
+        </div>
+
+        {isAdmin && (
+          <p className="text-[11px] text-neutral-500 text-center">
+            Dica da diretoria: os posts mais recentes aparecem sozinhos acima. Pra fixar um post específico, publique um aviso com o link dele.
+          </p>
         )}
       </section>
     </div>

@@ -45,10 +45,7 @@ export const FEATURED_IG_POSTS: string[] = [];
  */
 export const CAIXA = {
   /** Valor padrão da mensalidade (R$). Pode ser ajustado pela diretoria. */
-  mensalidadeDefault: 30,
-  /** Janela de vencimento da mensalidade (dias do mês) */
-  dueDayStart: 5,
-  dueDayEnd: 7,
+  mensalidadeDefault: 100,
   /** Chave PIX da diretoria (celular) */
   pix: {
     key: '27999359431',
@@ -83,6 +80,20 @@ export const buildPixPayload = () => CAIXA.pix.key;
 /** Mês de referência atual no formato YYYY-MM (usado na tesouraria). */
 export const currentMonthRef = (d: Date = new Date()) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+
+/**
+ * Vencimento da mensalidade: o 1º DOMINGO do mês (cai sempre entre os dias 1 e 7).
+ */
+export const firstSundayOfMonth = (d: Date = new Date()) => {
+  const first = new Date(d.getFullYear(), d.getMonth(), 1);
+  return new Date(d.getFullYear(), d.getMonth(), 1 + ((7 - first.getDay()) % 7));
+};
+
+/** Texto amigável do vencimento (ex.: "domingo, 05/07"). */
+export const dueDateLabel = (d: Date = new Date()) => {
+  const due = firstSundayOfMonth(d);
+  return `domingo, ${String(due.getDate()).padStart(2, '0')}/${String(due.getMonth() + 1).padStart(2, '0')}`;
+};
 
 /** Nome amigável do mês (ex.: "Junho/2026"). */
 export const monthLabel = (ref: string) => {

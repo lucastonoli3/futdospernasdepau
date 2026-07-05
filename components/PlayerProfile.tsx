@@ -21,6 +21,9 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   const [thought, setThought] = useState(player.thought || "");
   const [highBadges, setHighBadges] = useState<string[]>(player.high_badges || []);
+  const [memberSinceYear, setMemberSinceYear] = useState<string>(
+    player.member_since ? String(new Date(player.member_since).getFullYear()) : ''
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(false);
   const [reportDescription, setReportDescription] = useState("");
@@ -212,14 +215,20 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
           finalPhoto = publicUrl;
         }
 
-        const { error } = await supabase
-          .from('players')
-          .update({
-            thought: thought,
-            high_badges: highBadges,
-            photo: finalPhoto
-          })
-          .eq('id', player.id);
+        const updates: any = {
+          thought: thought,
+          high_badges: highBadges,
+          photo: finalPhoto,
+          member_since: memberSinceYear ? `${memberSinceYear}-01-01` : null
+        };
+
+        let { error } = await supabase.from('players').update(updates).eq('id', player.id);
+
+        // Banco ainda sem a coluna member_since? Salva o resto mesmo assim.
+        if (error && /member_since|column/i.test(error.message || '')) {
+          delete updates.member_since;
+          ({ error } = await supabase.from('players').update(updates).eq('id', player.id));
+        }
 
         if (error) throw new Error("Erro no Banco: " + error.message);
 
@@ -412,6 +421,11 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
     ? Math.floor((Date.now() - memberSince.getTime()) / (365.25 * 24 * 3600 * 1000))
     : null;
   const isVeteran = (seniorityYears ?? 0) >= 5;
+  const seniorityTier = seniorityYears === null ? null
+    : seniorityYears >= 10 ? { label: 'Lenda do Balaio', icon: '🐐', cls: 'bg-gold text-black' }
+    : seniorityYears >= 5 ? { label: 'Veterano', icon: '🏅', cls: 'bg-gold/20 text-gold border border-gold/50' }
+    : seniorityYears >= 2 ? { label: 'Prata da Casa', icon: '⭐', cls: 'bg-neutral-700 text-white' }
+    : { label: 'Novato do Balaio', icon: '🌱', cls: 'bg-pitch-800 text-pitch-300' };
 
   return (
     <div className={`relative overflow-hidden transition-all duration-700 border-b pb-20 ${isElite ? 'border-yellow-600/30 bg-gradient-to-r from-black via-yellow-900/5 to-black' : 'border-neutral-900 bg-black'}`}>
@@ -431,6 +445,22 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
                 className="w-full bg-neutral-900 border border-neutral-800 p-4 font-mono text-sm text-white focus:border-gold outline-none h-24"
                 placeholder="Ex: Aqui o que vale é a resenha."
               />
+            </div>
+
+            {/* Antiguidade: no Balaio desde... */}
+            <div className="space-y-2 p-4 border border-gold/20 bg-gold/5 rounded-xl">
+              <label className="text-xs font-black text-gold uppercase tracking-widest">🏅 Estou no Balaio desde…</label>
+              <select
+                value={memberSinceYear}
+                onChange={e => setMemberSinceYear(e.target.value)}
+                className="w-full bg-black border border-gold/30 p-4 text-white text-base rounded-xl outline-none focus:border-gold"
+              >
+                <option value="">Prefiro não dizer</option>
+                {Array.from({ length: (new Date().getFullYear() - 2000) + 1 }, (_, i) => new Date().getFullYear() - i).map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+              <p className="text-xs text-neutral-400">Seu tempo de casa aparece no perfil com o título de veterania. Quanto mais antigo, mais respeito. 🏆</p>
             </div>
 
             {/* Upload de Avatar */}
@@ -642,15 +672,18 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, currentUser }) =>
             </div>
 
             {/* ANTIGUIDADE NO BALAIO (orgulho da casa) */}
-            {memberSince && (
+            {memberSince && seniorityTier && (
               <div className="flex justify-center md:justify-start">
-                <div className={`inline-flex items-center gap-3 rounded-2xl border px-5 py-3 ${isVeteran ? 'border-gold/50 bg-gold/10' : 'border-neutral-700 bg-neutral-900/50'}`}>
-                  <span className="text-2xl">{isVeteran ? '🏅' : '📅'}</span>
+                <div className={`inline-flex items-center gap-4 rounded-2xl border px-6 py-4 ${isVeteran ? 'border-gold/60 bg-gold/10 gold-glow' : 'border-neutral-700 bg-neutral-900/50'}`}>
+                  <span className="text-4xl">{seniorityTier.icon}</span>
                   <div className="text-left leading-tight">
-                    <p className={`font-oswald font-black uppercase italic text-lg ${isVeteran ? 'text-gold' : 'text-white'}`}>
-                      {seniorityYears && seniorityYears > 0 ? `${seniorityYears} ${seniorityYears === 1 ? 'ano' : 'anos'} de Balaio` : 'Sócio novo do Balaio'}
+                    <p className={`font-oswald font-black uppercase italic text-2xl ${isVeteran ? 'text-gold' : 'text-white'}`}>
+                      {seniorityYears && seniorityYears > 0 ? `${seniorityYears} ${seniorityYears === 1 ? 'ano' : 'anos'} de Balaio` : 'Recém-chegado ao Balaio'}
                     </p>
-                    <p className="text-xs text-neutral-400">No clube desde {memberSince.getFullYear()}{isVeteran ? ' • Veterano' : ''}</p>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <span className={`px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider ${seniorityTier.cls}`}>{seniorityTier.label}</span>
+                      <span className="text-xs text-neutral-400">Sócio desde {memberSince.getFullYear()}</span>
+                    </div>
                   </div>
                 </div>
               </div>

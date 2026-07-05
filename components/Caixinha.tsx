@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Player, GlobalFinances } from '../types';
 import { supabase } from '../services/supabaseClient';
 import imageCompression from 'browser-image-compression';
-import { CAIXA, CLUB, currentMonthRef, monthLabel } from '../brandConfig';
+import { CAIXA, CLUB, currentMonthRef, monthLabel, dueDateLabel } from '../brandConfig';
 import { buildPixBRCode, qrImageUrl, formatPixKeyDisplay } from '../services/pixService';
 
 interface CaixinhaProps {
@@ -171,7 +171,7 @@ const Caixinha: React.FC<CaixinhaProps> = ({ players, finances, currentUser }) =
           <div className="text-right">
             <p className="text-[10px] text-neutral-500 uppercase font-black tracking-widest">Valor</p>
             <p className="font-oswald text-4xl font-black text-gold tracking-tighter">R$ {valor.toFixed(2)}</p>
-            <p className="text-[9px] text-neutral-600 font-mono uppercase mt-1">Vence dias {CAIXA.dueDayStart}–{CAIXA.dueDayEnd}</p>
+            <p className="text-[11px] text-neutral-400 font-mono uppercase mt-1">Vence {dueDateLabel()} (1º domingo do mês)</p>
           </div>
         </div>
 

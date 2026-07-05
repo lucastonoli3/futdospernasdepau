@@ -116,7 +116,7 @@ create table if not exists public.club_settings (
   id integer primary key default 1,
   pix_key text,
   pix_holder text,
-  mensalidade_amount numeric default 30,
+  mensalidade_amount numeric default 100,
   updated_at timestamptz default now(),
   constraint club_settings_singleton check (id = 1)
 );
@@ -161,12 +161,13 @@ create index if not exists news_created_idx on public.news (created_at desc);
 insert into public.sessions (id, status) values (1, 'resenha') on conflict (id) do nothing;
 insert into public.finances (id, total_balance, goals) values (1, 0, '[]'::jsonb) on conflict (id) do nothing;
 insert into public.club_settings (id, pix_key, pix_holder, mensalidade_amount)
-  values (1, '27999359431', 'Diretoria Balaio de Gato FC', 30)
+  values (1, '27999359431', 'Diretoria Balaio de Gato FC', 100)
   on conflict (id) do nothing;
--- Se a linha já existia sem PIX, preenche a chave oficial
+-- Se a linha já existia, garante PIX oficial e migra o valor antigo (30) para R$ 100
 update public.club_settings
   set pix_key = coalesce(nullif(pix_key, ''), '27999359431'),
-      pix_holder = coalesce(nullif(pix_holder, ''), 'Diretoria Balaio de Gato FC')
+      pix_holder = coalesce(nullif(pix_holder, ''), 'Diretoria Balaio de Gato FC'),
+      mensalidade_amount = case when mensalidade_amount is null or mensalidade_amount = 30 then 100 else mensalidade_amount end
   where id = 1;
 
 -- ---------- RLS (app usa a chave anônima → liberar acesso) ----------
